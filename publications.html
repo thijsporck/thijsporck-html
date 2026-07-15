@@ -29,7 +29,20 @@
             justify-content: space-between;
             align-items: center;
         }
-        .accordion-content { display: none; padding: 8px 0; max-height: 300px; overflow-y: auto; }
+        .accordion-header::after {
+            content: "▼";
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+        }
+        .accordion-header.active::after {
+            transform: rotate(180deg);
+        }
+        .accordion-content { 
+            display: none; 
+            padding: 8px 0; 
+            max-height: 320px; 
+            overflow-y: auto; 
+        }
         .accordion-content.active { display: block; }
 
         .checkbox-label {
@@ -56,17 +69,14 @@
 </head>
 <body>
     <div class="container">
-        <!-- LEFT -->
         <div class="main-content">
             <h1>Publications</h1>
             <div class="pub-count">Showing <span id="countNum">0</span> publications</div>
             <div class="publications-list" id="pubList"></div>
         </div>
 
-        <!-- RIGHT SIDEBAR -->
         <div class="sidebar">
-
-            <!-- Open Access Checkbox -->
+            <!-- Open Access -->
             <div class="box">
                 <label>
                     <input type="checkbox" id="oaFilter"> 
@@ -101,7 +111,6 @@
                     <div class="accordion-content" id="publisherContent"></div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -111,7 +120,7 @@ const CSV_URL = 'https://raw.githubusercontent.com/thijsporck/thijsporck-html/re
 
 let allPublications = [];
 let typeChart, yearChart;
-let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set() };
+let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set(), types: new Set() };
 
 // Load CSV
 Papa.parse(CSV_URL, {
@@ -158,24 +167,26 @@ function populateFilters() {
     });
     createCheckboxGroup('publisherContent', publishers, 'publishers');
 
-    // Accordion functionality
+    // Accordion
     document.querySelectorAll('.accordion-header').forEach(header => {
         header.addEventListener('click', () => {
             const content = document.getElementById(header.dataset.target);
             content.classList.toggle('active');
+            header.classList.toggle('active');
         });
     });
 
-    // Open Access
     document.getElementById('oaFilter').addEventListener('change', renderAll);
 }
 
 function createCheckboxGroup(containerId, data, filterType) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
-    
-    Object.keys(data).sort().forEach(key => {
-        const count = data[key];
+
+    // Sort by frequency (highest first)
+    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+    sorted.forEach(([key, count]) => {
         const label = document.createElement('label');
         label.className = 'checkbox-label';
         label.innerHTML = `
@@ -183,11 +194,8 @@ function createCheckboxGroup(containerId, data, filterType) {
             ${key} <span style="color:#666">(${count})</span>
         `;
         label.querySelector('input').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                activeFilters[filterType].add(key);
-            } else {
-                activeFilters[filterType].delete(key);
-            }
+            if (e.target.checked) activeFilters[filterType].add(key);
+            else activeFilters[filterType].delete(key);
             renderAll();
         });
         container.appendChild(label);
@@ -198,32 +206,26 @@ function createCheckboxGroup(containerId, data, filterType) {
 function filterPublications() {
     let filtered = [...allPublications];
 
-    // Open Access
     if (document.getElementById('oaFilter').checked) {
         filtered = filtered.filter(p => (p['Open Access'] || '').trim() === 'Yes');
     }
 
-    // Themes
     if (activeFilters.themes.size > 0) {
-        filtered = filtered.filter(p => {
-            if (!p['Theme(s)']) return false;
-            const pubThemes = p['Theme(s)'].split(';').map(t => t.trim());
-            return Array.from(activeFilters.themes).some(t => pubThemes.includes(t));
-        });
+        filtered = filtered.filter(p => p['Theme(s)'] && 
+            Array.from(activeFilters.themes).some(t => p['Theme(s)'].includes(t)));
     }
 
-    // Co-authors
     if (activeFilters.coauthors.size > 0) {
-        filtered = filtered.filter(p => {
-            if (!p['Author(s)']) return false;
-            const pubAuthors = p['Author(s)'].split(';').map(a => a.trim());
-            return Array.from(activeFilters.coauthors).some(a => pubAuthors.includes(a));
-        });
+        filtered = filtered.filter(p => p['Author(s)'] && 
+            Array.from(activeFilters.coauthors).some(a => p['Author(s)'].includes(a)));
     }
 
-    // Publishers
     if (activeFilters.publishers.size > 0) {
         filtered = filtered.filter(p => activeFilters.publishers.has(p.Publisher));
+    }
+
+    if (activeFilters.types.size > 0) {
+        filtered = filtered.filter(p => activeFilters.types.has(p['Type of publication']));
     }
 
     return filtered;
@@ -237,13 +239,12 @@ function renderAll() {
     renderYearBar(filtered);
 }
 
-// ==================== PUBLICATION LIST ====================
+// ==================== PUBLICATION LIST (Preserve CSV order) ====================
 function renderPublicationsList(pubs) {
     const container = document.getElementById('pubList');
     container.innerHTML = '';
     
-    pubs.sort((a, b) => parseInt(b.Year) - parseInt(a.Year));
-    
+    // Use original order from CSV (no sorting)
     pubs.forEach(pub => {
         const isMonograph = ['monograph', 'edited volume', 'book'].some(t => 
             (pub['Type of publication'] || '').toLowerCase().includes(t)
@@ -284,6 +285,7 @@ function renderTypePie(pubs) {
     const labels = Object.keys(counts).map(key => `${key} (${counts[key]})`);
 
     if (typeChart) typeChart.destroy();
+    
     typeChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -293,7 +295,23 @@ function renderTypePie(pubs) {
                 backgroundColor: ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1']
             }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    onClick: (e, legendItem) => {
+                        const label = legendItem.text.split(' (')[0]; // extract type name
+                        if (activeFilters.types.has(label)) {
+                            activeFilters.types.delete(label);
+                        } else {
+                            activeFilters.types.add(label);
+                        }
+                        renderAll();
+                    }
+                }
+            }
+        }
     });
 }
 
@@ -308,11 +326,7 @@ function renderYearBar(pubs) {
         type: 'bar',
         data: {
             labels: years,
-            datasets: [{ 
-                label: 'Publications', 
-                data: years.map(y => counts[y]), 
-                backgroundColor: '#4e79a7' 
-            }]
+            datasets: [{ label: 'Publications', data: years.map(y => counts[y]), backgroundColor: '#4e79a7' }]
         },
         options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }}
     });
