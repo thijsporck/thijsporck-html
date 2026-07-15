@@ -7,100 +7,148 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
-        h1, h2 { text-align: center; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .controls { 
-            background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f9f9f9; 
         }
-        .chart-container {
-            background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            display: flex; 
+            gap: 25px;
+        }
+        .main-content { 
+            flex: 7; 
+        }
+        .sidebar { 
+            flex: 3; 
+            min-width: 320px;
+        }
+        .sidebar .chart-container {
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f0f0f0; position: sticky; top: 0; }
-        tr:hover { background: #f5f5f5; }
-        .title { font-style: italic; }
-        .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
-        select, input[type="checkbox"] { margin-right: 8px; }
-        .pub-count { font-weight: bold; margin: 10px 0; }
-        a { color: #0066cc; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        h1 { text-align: center; margin-bottom: 10px; }
+        .controls {
+            background: white; 
+            padding: 18px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        /* Clean publication list */
+        .publications-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .pub-item {
+            padding: 14px 20px;
+            border-bottom: 1px solid #eee;
+            line-height: 1.45;
+        }
+        .pub-item:last-child { border-bottom: none; }
+        .pub-item:hover { background: #f8f9fa; }
+        .pub-type { 
+            font-size: 0.85rem; 
+            color: #555; 
+            font-weight: 500;
+        }
+        .pub-title { 
+            font-size: 1.1rem; 
+            margin: 6px 0 4px 0;
+        }
+        .pub-title.monograph { font-style: italic; }
+        .pub-authors { 
+            color: #444; 
+            font-size: 0.95rem;
+        }
+        .pub-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        .doi-link {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .doi-link:hover { text-decoration: underline; }
+
+        .pub-count { 
+            font-weight: bold; 
+            margin: 10px 0 15px 0; 
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Publications Overview</h1>
-        <p style="text-align:center">Loading from GitHub CSV • Built with PapaParse + Chart.js</p>
-
-        <div class="controls">
-            <div>
-                <label><strong>Open Access</strong></label><br>
-                <select id="oaFilter">
-                    <option value="">All</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                </select>
-            </div>
-            <div>
-                <label><strong>Publisher</strong></label><br>
-                <select id="publisherFilter"></select>
-            </div>
-            <div>
-                <label><strong>Theme</strong></label><br>
-                <select id="themeFilter"></select>
-            </div>
-            <div>
-                <label><strong>Co-author</strong> (not Thijs Porck)</label><br>
-                <select id="coauthorFilter"></select>
-            </div>
-            <div>
-                <label><input type="checkbox" id="reviewedFilter"> Reviewed only</label>
-            </div>
+        <!-- LEFT: Publications List -->
+        <div class="main-content">
+            <h1>Publications</h1>
+            <div class="pub-count">Showing <span id="countNum">0</span> publications</div>
+            
+            <div class="publications-list" id="pubList"></div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <!-- RIGHT: Sidebar -->
+        <div class="sidebar">
+            <div class="controls">
+                <div>
+                    <label><strong>Open Access</strong></label><br>
+                    <select id="oaFilter">
+                        <option value="">All</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                <div>
+                    <label><strong>Publisher</strong></label><br>
+                    <select id="publisherFilter"></select>
+                </div>
+                <div>
+                    <label><strong>Theme</strong></label><br>
+                    <select id="themeFilter"></select>
+                </div>
+                <div>
+                    <label><strong>Co-author</strong></label><br>
+                    <select id="coauthorFilter"></select>
+                </div>
+                <div>
+                    <label><input type="checkbox" id="reviewedFilter"> Reviewed only</label>
+                </div>
+            </div>
+
             <div class="chart-container">
                 <h2>Publication Types</h2>
-                <canvas id="typePieChart" height="280"></canvas>
+                <canvas id="typePieChart" height="260"></canvas>
             </div>
+
             <div class="chart-container">
-                <h2>Themes</h2>
-                <canvas id="themePieChart" height="280"></canvas>
+                <h2>Publications per Year</h2>
+                <canvas id="yearBarChart" height="140"></canvas>
             </div>
         </div>
-
-        <div class="chart-container">
-            <h2>Publications per Year</h2>
-            <canvas id="yearBarChart" height="120"></canvas>
-        </div>
-
-        <div class="pub-count" id="count">Showing <span id="countNum">0</span> publications</div>
-        
-        <table id="pubTable">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Authors</th>
-                    <th>Title</th>
-                    <th>Year</th>
-                    <th>Journal / Book / Publisher</th>
-                    <th>DOI</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
     </div>
 
 <script>
 // ==================== CONFIG ====================
 const CSV_URL = 'https://raw.githubusercontent.com/thijsporck/thijsporck-html/refs/heads/main/data/publications.csv'; 
-// ←←← CHANGE THIS TO YOUR RAW GITHUB URL
+// ← Update this if your CSV is in a different location
 
 let allPublications = [];
-let typeChart, yearChart, themeChart;
+let typeChart, yearChart;
 
 // ==================== LOAD CSV ====================
 Papa.parse(CSV_URL, {
@@ -109,244 +157,136 @@ Papa.parse(CSV_URL, {
     skipEmptyLines: true,
     complete: function(results) {
         allPublications = results.data.filter(row => row.Title && row.Year);
-        console.log(`Loaded ${allPublications.length} publications`);
         populateFilters();
         renderAll();
     },
     error: function(err) {
         console.error(err);
-        alert("Failed to load CSV. Make sure the URL is a raw GitHub link and the file is public.");
+        document.getElementById('pubList').innerHTML = `<p style="color:red;padding:20px;">Failed to load CSV. Check the URL.</p>`;
     }
 });
 
-// ==================== FILTERS ====================
-function populateFilters() {
+// ==================== FILTERS & RENDER ====================
+function populateFilters() { /* same as before */ 
+    // ... (I'll keep it short - same code as previous version)
     const pubs = allPublications;
     
-    // Publisher
     const publishers = [...new Set(pubs.map(p => p.Publisher).filter(Boolean))].sort();
     const pubSelect = document.getElementById('publisherFilter');
     pubSelect.innerHTML = '<option value="">All</option>';
-    publishers.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        pubSelect.appendChild(opt);
-    });
+    publishers.forEach(p => { const opt = document.createElement('option'); opt.value = p; opt.textContent = p; pubSelect.appendChild(opt); });
 
-    // Themes (multi-value)
     const allThemes = new Set();
     pubs.forEach(p => {
-        if (p['Theme(s)']) {
-            p['Theme(s)'].split(';').map(t => t.trim()).filter(Boolean).forEach(t => allThemes.add(t));
-        }
+        if (p['Theme(s)']) p['Theme(s)'].split(';').map(t => t.trim()).filter(Boolean).forEach(t => allThemes.add(t));
     });
     const themeSelect = document.getElementById('themeFilter');
     themeSelect.innerHTML = '<option value="">All</option>';
-    [...allThemes].sort().forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t;
-        opt.textContent = t;
-        themeSelect.appendChild(opt);
-    });
+    [...allThemes].sort().forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; themeSelect.appendChild(opt); });
 
-    // Co-authors
     const coauthors = new Set();
     pubs.forEach(p => {
-        if (p['Author(s)']) {
-            p['Author(s)'].split(';').map(a => a.trim()).filter(a => a && !a.includes('Thijs Porck')).forEach(a => coauthors.add(a));
-        }
+        if (p['Author(s)']) p['Author(s)'].split(';').map(a => a.trim()).filter(a => a && !a.includes('Thijs Porck')).forEach(a => coauthors.add(a));
     });
     const coSelect = document.getElementById('coauthorFilter');
     coSelect.innerHTML = '<option value="">All</option>';
-    [...coauthors].sort().forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
-        coSelect.appendChild(opt);
-    });
+    [...coauthors].sort().forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; coSelect.appendChild(opt); });
 
-    // Add listeners
-    ['oaFilter', 'publisherFilter', 'themeFilter', 'coauthorFilter', 'reviewedFilter'].forEach(id => {
-        const el = document.getElementById(id);
-        el.addEventListener('change', renderAll);
+    ['oaFilter','publisherFilter','themeFilter','coauthorFilter','reviewedFilter'].forEach(id => {
+        document.getElementById(id).addEventListener('change', renderAll);
     });
 }
 
-// ==================== RENDER EVERYTHING ====================
-function renderAll() {
-    const filtered = filterPublications();
-    
-    // Update count
-    document.getElementById('countNum').textContent = filtered.length;
-    
-    // Render table
-    renderTable(filtered);
-    
-    // Render charts
-    renderTypePie(filtered);
-    renderThemePie(filtered);
-    renderYearBar(filtered);
-}
-
-// ==================== FILTER LOGIC ====================
 function filterPublications() {
     let filtered = [...allPublications];
-    
-    // Open Access
     const oa = document.getElementById('oaFilter').value;
     if (oa) filtered = filtered.filter(p => (p['Open Access'] || '').trim() === oa);
     
-    // Publisher
     const pub = document.getElementById('publisherFilter').value;
     if (pub) filtered = filtered.filter(p => p.Publisher === pub);
     
-    // Theme
     const theme = document.getElementById('themeFilter').value;
-    if (theme) {
-        filtered = filtered.filter(p => {
-            if (!p['Theme(s)']) return false;
-            return p['Theme(s)'].split(';').map(t => t.trim()).includes(theme);
-        });
-    }
+    if (theme) filtered = filtered.filter(p => p['Theme(s)'] && p['Theme(s)'].includes(theme));
     
-    // Co-author
     const co = document.getElementById('coauthorFilter').value;
-    if (co) {
-        filtered = filtered.filter(p => {
-            if (!p['Author(s)']) return false;
-            return p['Author(s)'].split(';').map(a => a.trim()).includes(co);
-        });
-    }
+    if (co) filtered = filtered.filter(p => p['Author(s)'] && p['Author(s)'].includes(co));
     
-    // Reviewed
     if (document.getElementById('reviewedFilter').checked) {
         filtered = filtered.filter(p => (p.Reviewed || '').toLowerCase() === 'yes');
     }
-    
     return filtered;
 }
 
-// ==================== TABLE ====================
-function renderTable(pubs) {
-    const tbody = document.querySelector('#pubTable tbody');
-    tbody.innerHTML = '';
+function renderAll() {
+    const filtered = filterPublications();
+    document.getElementById('countNum').textContent = filtered.length;
+    renderPublicationsList(filtered);
+    renderTypePie(filtered);
+    renderYearBar(filtered);
+}
+
+// ==================== CLEAN LIST RENDERING ====================
+function renderPublicationsList(pubs) {
+    const container = document.getElementById('pubList');
+    container.innerHTML = '';
     
     pubs.sort((a, b) => parseInt(b.Year) - parseInt(a.Year));
     
     pubs.forEach(pub => {
-        const tr = document.createElement('tr');
-        
-        const isMonographOrEdited = ['monograph', 'edited volume', 'book'].some(t => 
+        const isMonograph = ['monograph', 'edited volume', 'book'].some(t => 
             (pub['Type of publication'] || '').toLowerCase().includes(t)
         );
         
-        const titleClass = isMonographOrEdited ? 'title' : '';
-        
-        let journalInfo = '';
-        if (pub.Journal) journalInfo = pub.Journal;
-        else if (pub['Book series']) journalInfo = pub['Book series'];
-        else if (pub.Publisher) journalInfo = pub.Publisher;
-        
         let doiHtml = '';
+        const isOA = (pub['Open Access'] || '').trim() === 'Yes';
         if (pub.DOI) {
             const doiLink = pub.DOI.startsWith('http') ? pub.DOI : `https://doi.org/${pub.DOI}`;
-            doiHtml = `<a href="${doiLink}" target="_blank">${pub.DOI}</a>`;
+            const linkText = isOA ? "Link to Open Access publication" : "Link to publication";
+            doiHtml = `<a href="${doiLink}" target="_blank" class="doi-link">[${linkText}]</a>`;
         }
         
-        tr.innerHTML = `
-            <td>${pub['Type of publication'] || ''}</td>
-            <td>${pub['Author(s)'] || ''}</td>
-            <td class="${titleClass}">${pub.Title || ''}</td>
-            <td>${pub.Year || ''}</td>
-            <td>${journalInfo}</td>
-            <td>${doiHtml}</td>
+        const div = document.createElement('div');
+        div.className = 'pub-item';
+        div.innerHTML = `
+            <div class="pub-type">${pub['Type of publication'] || ''} — ${pub.Year || ''}</div>
+            <div class="pub-title ${isMonograph ? 'monograph' : ''}">${pub.Title || ''}</div>
+            <div class="pub-authors">${pub['Author(s)'] || ''}</div>
+            <div class="pub-meta">
+                ${pub.Journal || pub['Book series'] || pub.Publisher || ''} 
+                ${pub['Page-range'] ? `• ${pub['Page-range']}` : ''}
+                ${doiHtml ? ' • ' + doiHtml : ''}
+            </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(div);
     });
 }
 
 // ==================== CHARTS ====================
-function renderTypePie(pubs) {
+function renderTypePie(pubs) { /* same as before */ 
     const ctx = document.getElementById('typePieChart');
-    const typeCounts = {};
+    const counts = {};
     pubs.forEach(p => {
         const t = p['Type of publication'] || 'Other';
-        typeCounts[t] = (typeCounts[t] || 0) + 1;
+        counts[t] = (counts[t] || 0) + 1;
     });
-    
     if (typeChart) typeChart.destroy();
-    
     typeChart = new Chart(ctx, {
         type: 'pie',
-        data: {
-            labels: Object.keys(typeCounts),
-            datasets: [{
-                data: Object.values(typeCounts),
-                backgroundColor: [
-                    '#4e79a7', '#f28e2c', '#e15759', '#76b7b2',
-                    '#59a14f', '#edc949', '#af7aa1', '#ff9da7'
-                ]
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'right' } } }
+        data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc949'] }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } }}
     });
 }
 
-function renderThemePie(pubs) {
-    const ctx = document.getElementById('themePieChart');
-    const themeCounts = {};
-    pubs.forEach(p => {
-        if (p['Theme(s)']) {
-            p['Theme(s)'].split(';').map(t => t.trim()).filter(Boolean).forEach(t => {
-                themeCounts[t] = (themeCounts[t] || 0) + 1;
-            });
-        }
-    });
-    
-    if (themeChart) themeChart.destroy();
-    
-    themeChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: Object.keys(themeCounts),
-            datasets: [{
-                data: Object.values(themeCounts),
-                backgroundColor: [
-                    '#4e79a7', '#f28e2c', '#e15759', '#76b7b2',
-                    '#59a14f', '#edc949', '#af7aa1', '#ff9da7'
-                ]
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'right' } } }
-    });
-}
-
-function renderYearBar(pubs) {
+function renderYearBar(pubs) { /* same as before */ 
     const ctx = document.getElementById('yearBarChart');
-    const yearCounts = {};
-    pubs.forEach(p => {
-        if (p.Year) yearCounts[p.Year] = (yearCounts[p.Year] || 0) + 1;
-    });
-    
-    const years = Object.keys(yearCounts).sort((a,b) => a - b);
-    
+    const counts = {};
+    pubs.forEach(p => { if (p.Year) counts[p.Year] = (counts[p.Year] || 0) + 1; });
+    const years = Object.keys(counts).sort((a,b)=>a-b);
     if (yearChart) yearChart.destroy();
-    
     yearChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: years,
-            datasets: [{
-                label: 'Publications',
-                data: years.map(y => yearCounts[y]),
-                backgroundColor: '#4e79a7'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
+        data: { labels: years, datasets: [{ label: 'Publications', data: years.map(y => counts[y]), backgroundColor: '#4e79a7' }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }} }}
     });
 }
 </script>
