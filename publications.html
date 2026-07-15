@@ -29,74 +29,55 @@
             justify-content: space-between;
             align-items: center;
         }
-        .accordion-header::after {
-            content: "▼";
-            font-size: 0.9rem;
-            transition: transform 0.2s;
-        }
-        .accordion-header.active::after {
-            transform: rotate(180deg);
-        }
-        .accordion-content { 
-            display: none; 
-            padding: 8px 0; 
-            max-height: 320px; 
-            overflow-y: auto; 
-        }
+        .accordion-header::after { content: "▼"; font-size: 0.9rem; transition: transform 0.2s; }
+        .accordion-header.active::after { transform: rotate(180deg); }
+        .accordion-content { display: none; padding: 8px 0; max-height: 320px; overflow-y: auto; }
         .accordion-content.active { display: block; }
 
-        .checkbox-label {
-            display: block;
-            padding: 4px 0;
-            font-size: 0.95rem;
-        }
+        .checkbox-label { display: block; padding: 4px 0; font-size: 0.95rem; }
 
-        /* Clean list */
+        /* Publication list */
         .publications-list { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
-        .pub-item { padding: 14px 20px; border-bottom: 1px solid #eee; line-height: 1.45; }
+        .pub-item { 
+            padding: 16px 22px; 
+            border-bottom: 1px solid #eee; 
+            line-height: 1.5;
+        }
         .pub-item:last-child { border-bottom: none; }
         .pub-item:hover { background: #f8f9fa; }
-        .pub-type { font-size: 0.85rem; color: #555; font-weight: 500; }
-        .pub-title { font-size: 1.1rem; margin: 6px 0 4px 0; }
-        .pub-title.monograph { font-style: italic; }
-        .pub-authors { color: #444; font-size: 0.95rem; }
-        .pub-meta { font-size: 0.9rem; color: #666; margin-top: 4px; }
+        
+        .pub-title { font-style: italic; }
         .doi-link { color: #0066cc; text-decoration: none; font-weight: 500; }
         .doi-link:hover { text-decoration: underline; }
-
+        
         .pub-count { font-weight: bold; margin: 10px 0 15px 0; font-size: 1.1rem; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- LEFT: Publications -->
         <div class="main-content">
             <h1>Publications</h1>
             <div class="pub-count">Showing <span id="countNum">0</span> publications</div>
             <div class="publications-list" id="pubList"></div>
         </div>
 
+        <!-- RIGHT: Sidebar -->
         <div class="sidebar">
-            <!-- Open Access -->
             <div class="box">
-                <label>
-                    <input type="checkbox" id="oaFilter"> 
-                    <strong>Only show Open Access publications</strong>
-                </label>
+                <label><input type="checkbox" id="oaFilter"> <strong>Only show Open Access publications</strong></label>
             </div>
 
-            <!-- Types Pie Chart -->
             <div class="box">
                 <h2>Publication Types</h2>
                 <canvas id="typePieChart" height="260"></canvas>
             </div>
 
-            <!-- Year Bar Chart -->
             <div class="box">
                 <h2>Publications per Year</h2>
                 <canvas id="yearBarChart" height="160"></canvas>
             </div>
 
-            <!-- Collapsible Filters -->
             <div class="box">
                 <div class="accordion">
                     <div class="accordion-header" data-target="themeContent">Themes <span id="themeCount"></span></div>
@@ -122,7 +103,7 @@ let allPublications = [];
 let typeChart, yearChart;
 let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set(), types: new Set() };
 
-// Load CSV
+// ==================== LOAD CSV ====================
 Papa.parse(CSV_URL, {
     download: true,
     header: true,
@@ -134,6 +115,69 @@ Papa.parse(CSV_URL, {
     }
 });
 
+// ==================== HELPERS ====================
+function formatAuthors(authorsStr, isEditor = false) {
+    if (!authorsStr) return '';
+    let authors = authorsStr.split(';').map(a => a.trim()).filter(Boolean);
+    if (authors.length === 0) return '';
+    
+    let formatted = authors.slice(0, -1).join(', ');
+    if (authors.length > 1) formatted += ' & ' + authors[authors.length - 1];
+    else formatted = authors[0];
+    
+    if (isEditor) formatted += authors.length > 1 ? ' (eds.)' : ' (ed.)';
+    return formatted;
+}
+
+// ==================== MAIN RENDER ====================
+function renderPublicationsList(pubs) {
+    const container = document.getElementById('pubList');
+    container.innerHTML = '';
+
+    pubs.forEach(pub => {
+        const type = (pub['Type of publication'] || '').trim();
+        let html = '';
+        const isOA = (pub['Open Access'] || '').trim() === 'Yes';
+        const doiHtml = pub.DOI ? 
+            `<a href="${pub.DOI.startsWith('http') ? pub.DOI : 'https://doi.org/' + pub.DOI}" target="_blank" class="doi-link">` +
+            `[Link to ${isOA ? 'Open Access ' : ''}publication]</a>` : '';
+
+        const authors = formatAuthors(pub['Author(s)'], 
+            ['Edited Volume', 'Peer-reviewed online text edition'].includes(type));
+
+        const title = `<span class="pub-title">${pub.Title}</span>`;
+
+        if (type === 'Monograph') {
+            html = `${authors}, ${title}, ${pub['Book series'] || ''} ${pub.Volume || ''} (${pub.Location || ''}: ${pub.Publisher}, ${pub.Year}) ${doiHtml} ${pub.Reviewed ? '— Reviewed' : ''}`;
+        }
+        else if (['Edited Volume', 'Peer-reviewed online text edition', 'Dataset'].includes(type)) {
+            html = `${authors}, ${title}, ${pub['Book series'] || ''} ${pub.Volume || ''} (${pub.Location || ''}: ${pub.Publisher}, ${pub.Year}), ${doiHtml} ${pub.Reviewed ? '— Reviewed' : ''}`;
+        }
+        else if (type === 'Peer-reviewed journal article') {
+            const journal = pub.Journal ? `<span class="pub-title">${pub.Journal}</span>` : '';
+            html = `${authors}, ${title}, ${journal} ${pub.Volume || ''} (${pub.Year}): ${pub['Page-range'] || ''} ${doiHtml}`;
+        }
+        else {
+            // Book chapter, Short contribution, Pedagogical publication, Popular-scientific article, Book review, etc.
+            let containerInfo = pub.Inside ? `<span class="pub-title">${pub.Inside}</span>` : 
+                               (pub.Journal ? `<span class="pub-title">${pub.Journal}</span>` : '');
+            
+            html = `${authors}, ${title}, ${containerInfo} ${pub.Volume || ''} `;
+            if (pub.Inside || pub.Journal) {
+                html += `(${pub.Location || ''}: ${pub.Publisher || ''}, ${pub.Year})`;
+            } else {
+                html += `(${pub.Year})`;
+            }
+            html += `: ${pub['Page-range'] || ''} ${doiHtml}`;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'pub-item';
+        div.innerHTML = html.trim();
+        container.appendChild(div);
+    });
+}
+
 // ==================== FILTERS ====================
 function populateFilters() {
     const pubs = allPublications;
@@ -141,30 +185,20 @@ function populateFilters() {
     // Themes
     const themes = {};
     pubs.forEach(p => {
-        if (p['Theme(s)']) {
-            p['Theme(s)'].split(';').map(t => t.trim()).filter(Boolean).forEach(t => {
-                themes[t] = (themes[t] || 0) + 1;
-            });
-        }
+        if (p['Theme(s)']) p['Theme(s)'].split(';').map(t => t.trim()).filter(Boolean).forEach(t => themes[t] = (themes[t]||0)+1);
     });
     createCheckboxGroup('themeContent', themes, 'themes');
 
     // Co-authors
     const coauthors = {};
     pubs.forEach(p => {
-        if (p['Author(s)']) {
-            p['Author(s)'].split(';').map(a => a.trim()).filter(a => a && !a.includes('Thijs Porck')).forEach(a => {
-                coauthors[a] = (coauthors[a] || 0) + 1;
-            });
-        }
+        if (p['Author(s)']) p['Author(s)'].split(';').map(a => a.trim()).filter(a => a && !a.includes('Thijs Porck')).forEach(a => coauthors[a] = (coauthors[a]||0)+1);
     });
     createCheckboxGroup('coauthorContent', coauthors, 'coauthors');
 
     // Publishers
     const publishers = {};
-    pubs.forEach(p => {
-        if (p.Publisher) publishers[p.Publisher] = (publishers[p.Publisher] || 0) + 1;
-    });
+    pubs.forEach(p => { if (p.Publisher) publishers[p.Publisher] = (publishers[p.Publisher]||0)+1; });
     createCheckboxGroup('publisherContent', publishers, 'publishers');
 
     // Accordion
@@ -182,18 +216,12 @@ function populateFilters() {
 function createCheckboxGroup(containerId, data, filterType) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
-
-    // Sort by frequency (highest first)
-    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
-
+    const sorted = Object.entries(data).sort((a,b) => b[1] - a[1]);
     sorted.forEach(([key, count]) => {
         const label = document.createElement('label');
         label.className = 'checkbox-label';
-        label.innerHTML = `
-            <input type="checkbox" value="${key}" data-type="${filterType}">
-            ${key} <span style="color:#666">(${count})</span>
-        `;
-        label.querySelector('input').addEventListener('change', (e) => {
+        label.innerHTML = `<input type="checkbox" value="${key}" data-type="${filterType}"> ${key} <span style="color:#666">(${count})</span>`;
+        label.querySelector('input').addEventListener('change', e => {
             if (e.target.checked) activeFilters[filterType].add(key);
             else activeFilters[filterType].delete(key);
             renderAll();
@@ -202,32 +230,24 @@ function createCheckboxGroup(containerId, data, filterType) {
     });
 }
 
-// ==================== FILTER LOGIC ====================
 function filterPublications() {
     let filtered = [...allPublications];
 
     if (document.getElementById('oaFilter').checked) {
         filtered = filtered.filter(p => (p['Open Access'] || '').trim() === 'Yes');
     }
-
     if (activeFilters.themes.size > 0) {
-        filtered = filtered.filter(p => p['Theme(s)'] && 
-            Array.from(activeFilters.themes).some(t => p['Theme(s)'].includes(t)));
+        filtered = filtered.filter(p => p['Theme(s)'] && Array.from(activeFilters.themes).some(t => p['Theme(s)'].includes(t)));
     }
-
     if (activeFilters.coauthors.size > 0) {
-        filtered = filtered.filter(p => p['Author(s)'] && 
-            Array.from(activeFilters.coauthors).some(a => p['Author(s)'].includes(a)));
+        filtered = filtered.filter(p => p['Author(s)'] && Array.from(activeFilters.coauthors).some(a => p['Author(s)'].includes(a)));
     }
-
     if (activeFilters.publishers.size > 0) {
         filtered = filtered.filter(p => activeFilters.publishers.has(p.Publisher));
     }
-
     if (activeFilters.types.size > 0) {
         filtered = filtered.filter(p => activeFilters.types.has(p['Type of publication']));
     }
-
     return filtered;
 }
 
@@ -239,74 +259,26 @@ function renderAll() {
     renderYearBar(filtered);
 }
 
-// ==================== PUBLICATION LIST (Preserve CSV order) ====================
-function renderPublicationsList(pubs) {
-    const container = document.getElementById('pubList');
-    container.innerHTML = '';
-    
-    // Use original order from CSV (no sorting)
-    pubs.forEach(pub => {
-        const isMonograph = ['monograph', 'edited volume', 'book'].some(t => 
-            (pub['Type of publication'] || '').toLowerCase().includes(t)
-        );
-        
-        let doiHtml = '';
-        if (pub.DOI) {
-            const isOA = (pub['Open Access'] || '').trim() === 'Yes';
-            const linkText = isOA ? "Link to Open Access publication" : "Link to publication";
-            const doiLink = pub.DOI.startsWith('http') ? pub.DOI : `https://doi.org/${pub.DOI}`;
-            doiHtml = `<a href="${doiLink}" target="_blank" class="doi-link">[${linkText}]</a>`;
-        }
-
-        const div = document.createElement('div');
-        div.className = 'pub-item';
-        div.innerHTML = `
-            <div class="pub-type">${pub['Type of publication'] || ''} — ${pub.Year}</div>
-            <div class="pub-title ${isMonograph ? 'monograph' : ''}">${pub.Title}</div>
-            <div class="pub-authors">${pub['Author(s)'] || ''}</div>
-            <div class="pub-meta">
-                ${[pub.Journal, pub['Book series'], pub.Publisher].filter(Boolean).join(' • ')}
-                ${doiHtml ? ' • ' + doiHtml : ''}
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
 // ==================== CHARTS ====================
 function renderTypePie(pubs) {
     const ctx = document.getElementById('typePieChart');
     const counts = {};
-    pubs.forEach(p => {
-        const t = p['Type of publication'] || 'Other';
-        counts[t] = (counts[t] || 0) + 1;
-    });
-
+    pubs.forEach(p => { const t = p['Type of publication'] || 'Other'; counts[t] = (counts[t]||0)+1; });
     const labels = Object.keys(counts).map(key => `${key} (${counts[key]})`);
 
     if (typeChart) typeChart.destroy();
-    
     typeChart = new Chart(ctx, {
         type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: Object.values(counts),
-                backgroundColor: ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1']
-            }]
-        },
+        data: { labels, datasets: [{ data: Object.values(counts), backgroundColor: ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1'] }] },
         options: {
             responsive: true,
             plugins: {
                 legend: {
                     position: 'bottom',
                     onClick: (e, legendItem) => {
-                        const label = legendItem.text.split(' (')[0]; // extract type name
-                        if (activeFilters.types.has(label)) {
-                            activeFilters.types.delete(label);
-                        } else {
-                            activeFilters.types.add(label);
-                        }
+                        const label = legendItem.text.split(' (')[0];
+                        if (activeFilters.types.has(label)) activeFilters.types.delete(label);
+                        else activeFilters.types.add(label);
                         renderAll();
                     }
                 }
@@ -318,16 +290,12 @@ function renderTypePie(pubs) {
 function renderYearBar(pubs) {
     const ctx = document.getElementById('yearBarChart');
     const counts = {};
-    pubs.forEach(p => { if (p.Year) counts[p.Year] = (counts[p.Year] || 0) + 1; });
-    const years = Object.keys(counts).sort((a,b) => a - b);
-
+    pubs.forEach(p => { if (p.Year) counts[p.Year] = (counts[p.Year]||0)+1; });
+    const years = Object.keys(counts).sort((a,b)=>a-b);
     if (yearChart) yearChart.destroy();
     yearChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: years,
-            datasets: [{ label: 'Publications', data: years.map(y => counts[y]), backgroundColor: '#4e79a7' }]
-        },
+        data: { labels: years, datasets: [{ label: 'Publications', data: years.map(y=>counts[y]), backgroundColor: '#4e79a7' }] },
         options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }}
     });
 }
