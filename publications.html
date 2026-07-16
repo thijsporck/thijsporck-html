@@ -17,6 +17,7 @@
         .sidebar .box { padding: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; }
 
         /* Accordion */
+        .accordion { margin-bottom: 10px; }
         .accordion-header { cursor: pointer; font-weight: 600; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
         .accordion-header::after { content: "▼"; font-size: 0.9rem; transition: transform 0.2s; }
         .accordion-header.active::after { transform: rotate(180deg); }
@@ -35,17 +36,19 @@
         .doi-link:hover { color: #9B2C2C; text-decoration: underline; }
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
-        /* Legend styles */
-        .type-legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
-        .type-legend-item { display:inline-flex; align-items:center; gap:6px; font-size:0.95rem; cursor:pointer }
-        .color-box { width:14px; height:14px; border-radius:3px; display:inline-block }
+        /* Legend styles - more compact */
+        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.9rem; }
+        .type-legend-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .type-legend-item input[type="checkbox"] { margin: 0; }
+        .color-box { width: 12px; height: 12px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+        .type-legend-item span:last-child { white-space: nowrap; }
 
         /* Year bar pointer */
         #yearBarChart { cursor: pointer }
 
         /* Small responsive adjustments (the main responsive layout is in css/style.css) */
         @media (max-width: 900px) {
-            .type-legend { gap:6px }
+            .type-legend { gap: 6px }
         }
     </style>
 </head>
@@ -108,8 +111,16 @@ Papa.parse(CSV_URL, {
     skipEmptyLines: true,
     complete: function(results) {
         allPublications = results.data.filter(row => row.Title && row.Year);
-        // Build master list of types so legend items persist even when a slice count drops to 0
-        allTypes = Array.from(new Set(allPublications.map(p => ((p['Type of publication']||'Other').trim())))).sort();
+        // Build master list of types in order of first appearance in CSV
+        allTypes = [];
+        const seen = new Set();
+        allPublications.forEach(p => {
+            const t = (p['Type of publication']||'Other').trim();
+            if (!seen.has(t)) {
+                allTypes.push(t);
+                seen.add(t);
+            }
+        });
         populateFilters(allPublications); // initial population
         renderAll();
     }
@@ -145,7 +156,10 @@ function renderPublicationsList(pubs) {
         const authors = formatAuthors(pub['Author(s)'], 
             ['Edited volume', 'Peer-reviewed online text edition'].includes(type));
 
-        const title = `<span class="pub-title">${pub.Title}</span>`;
+        const typesWithItalicTitle = ['Monograph', 'Edited volume', 'Peer-reviewed online text edition', 'Dataset'];
+        const title = typesWithItalicTitle.includes(type) ? 
+            `<span class="pub-title">${pub.Title}</span>` :
+            `${pub.Title}`;
 
         if (type === 'Monograph') {
             html = `${authors}, <i>${title}</i>, ${pub['Book series'] || ''} ${pub.Volume || ''} (${pub.Location || ''}: ${pub.Publisher}, ${pub.Year}) ${doiHtml} - ${pub.Reviewed}`;
@@ -154,7 +168,7 @@ function renderPublicationsList(pubs) {
         else if (['Edited volume', 'Peer-reviewed online text edition', 'Dataset'].includes(type)) {
          // 1. Only add a comma and space after authors if authors exist
             const authorPart = authors ? `${authors}, ` : '';
-         // 2. Only add italics to the title if title exists
+         // 2. Title already has italic handling from above
             const titlePart = title ? `<i>${title}</i>` : '';
          // 3. Only add a comma and space before series if it exists
             const seriesPart = pub['Book series'] ? `, ${pub['Book series']}` : '';
@@ -170,8 +184,8 @@ function renderPublicationsList(pubs) {
                 if (pub.Year) metaInfo.push(pub.Year);
                 // Wrap metaInfo in parentheses only if we actually found a location, publisher, or year
             const metaPart = metaInfo.length > 0 ? ` (${metaInfo.join(', ')})` : '';
-         // 6. Only add a comma before DOI if DOI exists
-            const doiPart = doiHtml ? `, ${doiHtml}` : '';
+         // 6. No comma before DOI for these types
+            const doiPart = doiHtml ? ` ${doiHtml}` : '';
 
          // 7. Only add the review dash if reviewed is true
             const reviewPart = pub.Reviewed ? ' — Reviewed' : '';
@@ -294,14 +308,18 @@ function populateFilters(pubs) {
     pubs.forEach(p => { if (p.Publisher) publishers[p.Publisher] = (publishers[p.Publisher]||0)+1; });
     createCheckboxGroup('publisherContent', publishers, 'publishers');
 
-    // Accordion
-    document.querySelectorAll('.accordion-header').forEach(header => {
-        header.addEventListener('click', () => {
-            const content = document.getElementById(header.dataset.target);
-            content.classList.toggle('active');
-            header.classList.toggle('active');
+    // Accordion - attach listeners only once on initial load
+    if (!window.accordionListenersAttached) {
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function(e) {
+                e.preventDefault();
+                const content = document.getElementById(this.dataset.target);
+                content.classList.toggle('active');
+                this.classList.toggle('active');
+            });
         });
-    });
+        window.accordionListenersAttached = true;
+    }
 
     document.getElementById('oaFilter').addEventListener('change', () => { renderAll(); });
 }
@@ -378,7 +396,7 @@ function renderTypePie(pubs) {
     pubs.forEach(p => { const t = (p['Type of publication']||'Other').trim(); counts[t] = (counts[t]||0)+1; });
 
     const palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1','#9c755f','#bab0ac'];
-    const labels = allTypes.slice(); // use master list so legend items persist
+    const labels = allTypes.slice(); // use master list in CSV order so legend items persist
     const dataValues = labels.map(l => counts[l] || 0);
     const colors = labels.map((_,i) => palette[i % palette.length]);
 
@@ -395,9 +413,6 @@ function renderTypePie(pubs) {
     labels.forEach((label, idx) => {
         const item = document.createElement('label');
         item.className = 'type-legend-item';
-        const colorBox = document.createElement('span');
-        colorBox.className = 'color-box';
-        colorBox.style.backgroundColor = colors[idx];
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         // checked = included
@@ -409,10 +424,13 @@ function renderTypePie(pubs) {
             else activeFilters.typesExcluded.add(t);
             renderAll();
         });
+        const colorBox = document.createElement('span');
+        colorBox.className = 'color-box';
+        colorBox.style.backgroundColor = colors[idx];
         const text = document.createElement('span');
         text.textContent = `${label} (${counts[label] || 0})`;
-        item.appendChild(colorBox);
         item.appendChild(checkbox);
+        item.appendChild(colorBox);
         item.appendChild(text);
         legendDiv.appendChild(item);
     });
