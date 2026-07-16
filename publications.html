@@ -1,33 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thijs Porck - Publications</title>
+    <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { margin: 0; padding: 20px;}
-        .container { max-width: 1400px; margin: 0 auto; display: flex; gap: 10px; }
-        .main-content { flex: 7; }
-        .sidebar { flex: 3; min-width: 300px; }
-
-        .sidebar .box {
-            padding: 10px; 
-            border-radius: 4px; 
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-        }
+        /* Page-specific styles that complement css/style.css */
+        .sidebar .box { padding: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; }
 
         /* Accordion */
-        .accordion-header {
-            cursor: pointer;
-            font-weight: 600;
-            padding: 10px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .accordion-header { cursor: pointer; font-weight: 600; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
         .accordion-header::after { content: "▼"; font-size: 0.9rem; transition: transform 0.2s; }
         .accordion-header.active::after { transform: rotate(180deg); }
         .accordion-content { display: none; padding: 8px 0; max-height: 320px; overflow-y: auto; }
@@ -35,20 +20,14 @@
 
         .checkbox-label { display: block; padding: 4px 0; font-size: 0.95rem; }
 
-        /* Publication list */
-        .publications-list { border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden; }
-        .pub-item { 
-            padding: 8px 11px; 
-            border-bottom: 1px solid; 
-            line-height: 1;
-        }
+        /* Publication list small tweaks */
+        .publications-list { border-radius: 4px; overflow: hidden; }
+        .pub-item { padding: 8px 11px; border-bottom: 1px solid; line-height: 1.25; }
         .pub-item:last-child { border-bottom: none; }
         .pub-item:hover { background: #F2F2F2; }
-        
         .pub-title { font-style: italic; }
         .doi-link { color: #0c2577; text-decoration: none; font-weight: 500; }
         .doi-link:hover { color: #9B2C2C; text-decoration: underline; }
-        
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
         /* Legend styles */
@@ -58,6 +37,11 @@
 
         /* Year bar pointer */
         #yearBarChart { cursor: pointer }
+
+        /* Small responsive adjustments (the main responsive layout is in css/style.css) */
+        @media (max-width: 900px) {
+            .type-legend { gap:6px }
+        }
     </style>
 </head>
 <body>
@@ -78,7 +62,7 @@
             <div class="box">
                 <h2>Publication Types</h2>
                 <canvas id="typePieChart" height="260"></canvas>
-                <div id="typeLegend" class="type-legend"></div>
+                <div id="typeLegend" class="type-legend" aria-hidden="false"></div>
             </div>
 
             <div class="box">
@@ -108,6 +92,7 @@
 const CSV_URL = 'https://raw.githubusercontent.com/thijsporck/thijsporck-html/refs/heads/main/data/publications.csv';
 
 let allPublications = [];
+let allTypes = [];
 let typeChart, yearChart;
 let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set(), typesExcluded: new Set(), years: new Set() };
 
@@ -118,7 +103,9 @@ Papa.parse(CSV_URL, {
     skipEmptyLines: true,
     complete: function(results) {
         allPublications = results.data.filter(row => row.Title && row.Year);
-        populateFilters();
+        // Build master list of types so legend items persist even when a slice count drops to 0
+        allTypes = Array.from(new Set(allPublications.map(p => ((p['Type of publication']||'Other').trim())))).sort();
+        populateFilters(allPublications); // initial population
         renderAll();
     }
 });
@@ -279,8 +266,9 @@ function renderPublicationsList(pubs) {
 }
 
 // ==================== FILTERS ====================
-function populateFilters() {
-    const pubs = allPublications;
+function populateFilters(pubs) {
+    // If no specific set is provided, use full list
+    pubs = pubs || allPublications;
 
     // Themes
     const themes = {};
@@ -310,7 +298,7 @@ function populateFilters() {
         });
     });
 
-    document.getElementById('oaFilter').addEventListener('change', renderAll);
+    document.getElementById('oaFilter').addEventListener('change', () => { renderAll(); });
 }
 
 function createCheckboxGroup(containerId, data, filterType) {
@@ -320,12 +308,22 @@ function createCheckboxGroup(containerId, data, filterType) {
     sorted.forEach(([key, count]) => {
         const label = document.createElement('label');
         label.className = 'checkbox-label';
-        label.innerHTML = `<input type="checkbox" value="${key}" data-type="${filterType}"> ${key} <span style="color:#666">(${count})</span>`;
-        label.querySelector('input').addEventListener('change', e => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = key;
+        checkbox.dataset.type = filterType;
+        // For these sidebar filters the presence of a check means the filter is active (include only)
+        checkbox.checked = activeFilters[filterType] && activeFilters[filterType].has(key);
+        checkbox.addEventListener('change', e => {
+            if (!activeFilters[filterType]) activeFilters[filterType] = new Set();
             if (e.target.checked) activeFilters[filterType].add(key);
             else activeFilters[filterType].delete(key);
             renderAll();
         });
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + key + ' '));
+        const small = document.createElement('span'); small.style.color='#666'; small.textContent = `(${count})`;
+        label.appendChild(small);
         container.appendChild(label);
     });
 }
@@ -336,28 +334,32 @@ function filterPublications() {
     if (document.getElementById('oaFilter').checked) {
         filtered = filtered.filter(p => (p['Open Access'] || '').trim() === 'Yes');
     }
-    if (activeFilters.themes.size > 0) {
-        filtered = filtered.filter(p => p['Theme(s)'] && Array.from(activeFilters.themes).some(t => p['Theme(s)'].includes(t)));
-    }
-    if (activeFilters.coauthors.size > 0) {
-        filtered = filtered.filter(p => p['Author(s)'] && Array.from(activeFilters.coauthors).some(a => p['Author(s)'].includes(a)));
-    }
-    if (activeFilters.publishers.size > 0) {
-        filtered = filtered.filter(p => activeFilters.publishers.has(p.Publisher));
-    }
     // Exclude types that were unchecked in the legend
     if (activeFilters.typesExcluded.size > 0) {
-        filtered = filtered.filter(p => !activeFilters.typesExcluded.has(p['Type of publication']));
+        filtered = filtered.filter(p => !activeFilters.typesExcluded.has((p['Type of publication']||'Other').trim()));
     }
     // Year filter: when a year is selected, only show that year's publications
     if (activeFilters.years.size > 0) {
         filtered = filtered.filter(p => activeFilters.years.has(p.Year));
     }
+    // Sidebar filters (themes/coauthors/publishers) act as includes: when any are checked, require match
+    if (activeFilters.themes && activeFilters.themes.size > 0) {
+        filtered = filtered.filter(p => p['Theme(s)'] && Array.from(activeFilters.themes).some(t => p['Theme(s)'].includes(t)));
+    }
+    if (activeFilters.coauthors && activeFilters.coauthors.size > 0) {
+        filtered = filtered.filter(p => p['Author(s)'] && Array.from(activeFilters.coauthors).some(a => p['Author(s)'].includes(a)));
+    }
+    if (activeFilters.publishers && activeFilters.publishers.size > 0) {
+        filtered = filtered.filter(p => activeFilters.publishers.has(p.Publisher));
+    }
     return filtered;
 }
 
 function renderAll() {
+    // Compute filtered pubs according to current filters
     const filtered = filterPublications();
+    // Update counts and sidebar choices to reflect the narrowed dataset (so they adapt to type/year selections)
+    populateFilters(filtered);
     document.getElementById('countNum').textContent = filtered.length;
     renderPublicationsList(filtered);
     renderTypePie(filtered);
@@ -368,26 +370,24 @@ function renderAll() {
 function renderTypePie(pubs) {
     const ctx = document.getElementById('typePieChart');
     const counts = {};
-    pubs.forEach(p => { const t = p['Type of publication'] || 'Other'; counts[t] = (counts[t]||0)+1; });
-    const typeLabels = Object.keys(counts);
-    const dataValues = Object.values(counts);
+    pubs.forEach(p => { const t = (p['Type of publication']||'Other').trim(); counts[t] = (counts[t]||0)+1; });
+
     const palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc949','#af7aa1','#9c755f','#bab0ac'];
-    const colors = typeLabels.map((_,i) => palette[i % palette.length]);
+    const labels = allTypes.slice(); // use master list so legend items persist
+    const dataValues = labels.map(l => counts[l] || 0);
+    const colors = labels.map((_,i) => palette[i % palette.length]);
 
     if (typeChart) typeChart.destroy();
     typeChart = new Chart(ctx, {
         type: 'pie',
-        data: { labels: typeLabels.map((l,i)=>`${l} (${dataValues[i]})`), datasets: [{ data: dataValues, backgroundColor: colors }] },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
-        }
+        data: { labels: labels.map((l,i)=>`${l} (${dataValues[i]})`), datasets: [{ data: dataValues, backgroundColor: colors }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
     // Build a custom legend with checkboxes (checkbox = included, unchecked = excluded)
     const legendDiv = document.getElementById('typeLegend');
     legendDiv.innerHTML = '';
-    typeLabels.forEach((label, idx) => {
+    labels.forEach((label, idx) => {
         const item = document.createElement('label');
         item.className = 'type-legend-item';
         const colorBox = document.createElement('span');
@@ -395,7 +395,8 @@ function renderTypePie(pubs) {
         colorBox.style.backgroundColor = colors[idx];
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.checked = !activeFilters.typesExcluded.has(label); // checked means included
+        // checked = included
+        checkbox.checked = !activeFilters.typesExcluded.has(label);
         checkbox.dataset.type = label;
         checkbox.addEventListener('change', (e) => {
             const t = e.target.dataset.type;
@@ -404,7 +405,7 @@ function renderTypePie(pubs) {
             renderAll();
         });
         const text = document.createElement('span');
-        text.textContent = `${label} (${counts[label]})`;
+        text.textContent = `${label} (${counts[label] || 0})`;
         item.appendChild(colorBox);
         item.appendChild(checkbox);
         item.appendChild(text);
