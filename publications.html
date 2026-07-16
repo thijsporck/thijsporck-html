@@ -7,17 +7,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
-        .container { max-width: 1400px; margin: 0 auto; display: flex; gap: 25px; }
+        body { margin: 0; padding: 20px;}
+        .container { max-width: 1400px; margin: 0 auto; display: flex; gap: 10px; }
         .main-content { flex: 7; }
-        .sidebar { flex: 3; min-width: 340px; }
+        .sidebar { flex: 3; min-width: 300px; }
 
         .sidebar .box {
-            background: white; 
-            padding: 18px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            padding: 10px; 
+            border-radius: 4px; 
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
         }
 
         /* Accordion */
@@ -37,20 +36,20 @@
         .checkbox-label { display: block; padding: 4px 0; font-size: 0.95rem; }
 
         /* Publication list */
-        .publications-list { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        .publications-list { border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden; }
         .pub-item { 
-            padding: 16px 22px; 
-            border-bottom: 1px solid #eee; 
-            line-height: 1.5;
+            padding: 8px 11px; 
+            border-bottom: 1px solid; 
+            line-height: 1;
         }
         .pub-item:last-child { border-bottom: none; }
-        .pub-item:hover { background: #f8f9fa; }
+        .pub-item:hover { background: #F2F2F2; }
         
         .pub-title { font-style: italic; }
-        .doi-link { color: #0066cc; text-decoration: none; font-weight: 500; }
-        .doi-link:hover { text-decoration: underline; }
+        .doi-link { color: #0c2577; text-decoration: none; font-weight: 500; }
+        .doi-link:hover { color: #9B2C2C; text-decoration: underline; }
         
-        .pub-count { font-weight: bold; margin: 10px 0 15px 0; font-size: 1.1rem; }
+        .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -115,7 +114,7 @@ Papa.parse(CSV_URL, {
     }
 });
 
-// ==================== HELPERS ====================
+// ==================== Fixing author and editor formatting ====================
 function formatAuthors(authorsStr, isEditor = false) {
     if (!authorsStr) return '';
     let authors = authorsStr.split(';').map(a => a.trim()).filter(Boolean);
@@ -143,33 +142,120 @@ function renderPublicationsList(pubs) {
             `[Link to ${isOA ? 'Open Access ' : ''}publication]</a>` : '';
 
         const authors = formatAuthors(pub['Author(s)'], 
-            ['Edited Volume', 'Peer-reviewed online text edition'].includes(type));
+            ['Edited volume', 'Peer-reviewed online text edition'].includes(type));
 
         const title = `<span class="pub-title">${pub.Title}</span>`;
 
         if (type === 'Monograph') {
-            html = `${authors}, ${title}, ${pub['Book series'] || ''} ${pub.Volume || ''} (${pub.Location || ''}: ${pub.Publisher}, ${pub.Year}) ${doiHtml} ${pub.Reviewed ? '— Reviewed' : ''}`;
+            html = `${authors}, <i>${title}</i>, ${pub['Book series'] || ''} ${pub.Volume || ''} (${pub.Location || ''}: ${pub.Publisher}, ${pub.Year}) ${doiHtml} - ${pub.Reviewed}`;
         }
-        else if (['Edited Volume', 'Peer-reviewed online text edition', 'Dataset'].includes(type)) {
-            html = `${authors}, ${title}, ${pub['Book series'] || ''} ${pub.Volume || ''} (${pub.Location || ''}: ${pub.Publisher}, ${pub.Year}), ${doiHtml} ${pub.Reviewed ? '— Reviewed' : ''}`;
-        }
+
+        else if (['Edited volume', 'Peer-reviewed online text edition', 'Dataset'].includes(type)) {
+         // 1. Only add a comma and space after authors if authors exist
+            const authorPart = authors ? `${authors}, ` : '';
+         // 2. Only add italics to the title if title exists
+            const titlePart = title ? `<i>${title}</i>` : '';
+         // 3. Only add a comma and space before series if it exists
+            const seriesPart = pub['Book series'] ? `, ${pub['Book series']}` : '';
+         // 4. Only add volume with a space if it exists
+            const volumePart = pub.Volume ? ` ${pub.Volume}` : '';
+         // 5. Build the inside of the parentheses dynamically so colons/commas don't break
+            let metaInfo = [];
+                if (pub.Location && pub.Publisher) {
+                metaInfo.push(`${pub.Location}: ${pub.Publisher}`);
+                    } else if (pub.Location || pub.Publisher) {
+                metaInfo.push(pub.Location || pub.Publisher); // Fallback if only one exists
+                    }
+                if (pub.Year) metaInfo.push(pub.Year);
+                // Wrap metaInfo in parentheses only if we actually found a location, publisher, or year
+            const metaPart = metaInfo.length > 0 ? ` (${metaInfo.join(', ')})` : '';
+         // 6. Only add a comma before DOI if DOI exists
+            const doiPart = doiHtml ? `, ${doiHtml}` : '';
+
+         // 7. Only add the review dash if reviewed is true
+            const reviewPart = pub.Reviewed ? ' — Reviewed' : '';
+
         else if (type === 'Peer-reviewed journal article') {
-            const journal = pub.Journal ? `<span class="pub-title">${pub.Journal}</span>` : '';
-            html = `${authors}, ${title}, ${journal} ${pub.Volume || ''} (${pub.Year}): ${pub['Page-range'] || ''} ${doiHtml}`;
+         // 1. Build the core citation array (Authors, Title, Journal)
+            let coreParts = [];
+                if (authors) coreParts.push(authors);
+                if (title) coreParts.push(`'${title}'`);
+                if (pub.Journal) coreParts.push(`<span class="pub-title"><i>${pub.Journal}</i></span>`);
+             // Join the core parts with a comma and a space
+            let htmlStart = coreParts.join(', ');
+         // 2. Handle Volume and Year combination gracefully
+            let volumeYearPart = '';
+                if (pub.Volume && pub.Year) {
+                    volumeYearPart = ` ${pub.Volume} (${pub.Year})`;
+                } else if (pub.Volume) {
+                volumeYearPart = ` ${pub.Volume}`;
+                } else if (pub.Year) {
+                volumeYearPart = ` (${pub.Year})`;
+                }
+         // 3. Handle Page Range with its leading colon
+            let pagePart = pub['Page-range'] ? `: ${pub['Page-range']}` : '';
+
+            // 4. Handle DOI with its leading space/comma
+            // (Assumes doiHtml already contains its own formatting or text link)
+             let doiPart = doiHtml ? ` ${doiHtml}` : '';
+
+            // Assemble everything tightly together
+            html = `${htmlStart}${volumeYearPart}${pagePart}${doiPart}`;
         }
+
         else {
-            // Book chapter, Short contribution, Pedagogical publication, Popular-scientific article, Book review, etc.
-            let containerInfo = pub.Inside ? `<span class="pub-title">${pub.Inside}</span>` : 
-                               (pub.Journal ? `<span class="pub-title">${pub.Journal}</span>` : '');
-            
-            html = `${authors}, ${title}, ${containerInfo} ${pub.Volume || ''} `;
-            if (pub.Inside || pub.Journal) {
-                html += `(${pub.Location || ''}: ${pub.Publisher || ''}, ${pub.Year})`;
-            } else {
-                html += `(${pub.Year})`;
-            }
-            html += `: ${pub['Page-range'] || ''} ${doiHtml}`;
+    // Check if 'Inside' is filled or empty
+    if (!pub.Inside) {
+        // --- 1. ACTS LIKE PEER-REVIEWED JOURNAL ARTICLE (Inside is empty) ---
+        let coreParts = [];
+        if (authors) coreParts.push(authors);
+        if (title) coreParts.push(`'${title}'`);
+        if (pub.Journal) coreParts.push(`<span class="pub-title">${pub.Journal}</span>`);
+        
+        let htmlStart = coreParts.join(', ');
+
+        let volumeYearPart = '';
+        if (pub.Volume && pub.Year) {
+            volumeYearPart = ` ${pub.Volume} (${pub.Year})`;
+        } else if (pub.Volume) {
+            volumeYearPart = ` ${pub.Volume}`;
+        } else if (pub.Year) {
+            volumeYearPart = ` (${pub.Year})`;
         }
+
+        let pagePart = pub['Page-range'] ? `: ${pub['Page-range']}` : '';
+        let doiPart = doiHtml ? ` ${doiHtml}` : '';
+
+        html = `${htmlStart}${volumeYearPart}${pagePart}${doiPart}`;
+
+    } else {
+        // --- 2. SPECIAL BOOK CHAPTER FORMAT (Inside is filled) ---
+        let coreParts = [];
+        if (authors) coreParts.push(authors);
+        if (title) coreParts.push(`'${title}'`); // Kept single quotes here too for consistency
+        
+        // Use 'Inside' since we know it exists
+        coreParts.push(`in: <span class="pub-title">${pub.Inside}</span>`);
+        
+        let htmlStart = coreParts.join(', ');
+        let volumePart = pub.Volume ? ` ${pub.Volume}` : '';
+
+        // Clean parenthetical info block (handles missing location or publisher)
+        let metaInfo = [];
+        if (pub.Location && pub.Publisher) {
+            metaInfo.push(`${pub.Location}: ${pub.Publisher}`);
+        } else if (pub.Location || pub.Publisher) {
+            metaInfo.push(pub.Location || pub.Publisher);
+        }
+        if (pub.Year) metaInfo.push(pub.Year);
+        
+        let metaPart = metaInfo.length > 0 ? ` (${metaInfo.join(', ')})` : '';
+        let pagePart = pub['Page-range'] ? `: ${pub['Page-range']}` : '';
+        let doiPart = doiHtml ? ` ${doiHtml}` : '';
+
+        html = `${htmlStart}${volumePart}${metaPart}${pagePart}${doiPart}`;
+    }
+}
 
         const div = document.createElement('div');
         div.className = 'pub-item';
