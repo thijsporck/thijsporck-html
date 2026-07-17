@@ -73,7 +73,7 @@
 
             <div class="box">
                 <h3>Publication types</h3>
-                <canvas id="typePieChart" height="200"></canvas>
+                <canvas id="typePieChart" height="100"></canvas>
                 <div id="typeLegend" class="type-legend" aria-hidden="false"></div>
             </div>
 
@@ -200,10 +200,11 @@ function renderPublicationsList(pubs) {
         }
 
         else if (type === 'Peer-reviewed journal article') {
-         // 1. Build the core citation array (Authors, Title, Journal)
+         // 1. Build the core citation array (Authors, Title, Inside (if filled), Journal)
             let coreParts = [];
                 if (authors) coreParts.push(authors);
                 if (title) coreParts.push(`'${title}'`);
+                if (pub.Inside) coreParts.push(`<span class="pub-title">${pub.Inside}</span>`);
                 if (pub.Journal) coreParts.push(`<span class="pub-title"><i>${pub.Journal}</i></span>`);
              // Join the core parts with a comma and a space
             let htmlStart = coreParts.join(', ');
@@ -452,7 +453,17 @@ function renderYearBar(pubs) {
     yearChart = new Chart(ctx, {
         type: 'bar',
         data: { labels: years, datasets: [{ label: 'Publications', data: years.map(x=>counts[x]), backgroundColor: buildColors() }] },
-        options: { responsive: true, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        options: { 
+            indexAxis: 'y',
+            responsive: true, 
+            scales: { 
+                y: { 
+                    beginAtZero: true, 
+                    ticks: { stepSize: 1 },
+                    reverse: true
+                } 
+            } 
+        }
     });
 
     // Click handler: toggle year filter (single-year selection)
