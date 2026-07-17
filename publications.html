@@ -13,6 +13,10 @@
         .container { max-width: 1400px; margin: 0 auto; display: flex; gap: 10px; }
         .main-content { flex: 7; }
         .sidebar { flex: 3; min-width: 300px; }
+        h1 {
+        text-align: center;
+        }
+
 
         .sidebar .box { padding: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; }
 
@@ -37,10 +41,10 @@
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
         /* Legend styles - more compact */
-        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.9rem; }
+        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.5rem; }
         .type-legend-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .type-legend-item input[type="checkbox"] { margin: 0; }
-        .color-box { width: 12px; height: 12px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+        .color-box { width: 6px; height: 6px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
         .type-legend-item span:last-child { white-space: nowrap; }
 
         /* Year bar pointer */
@@ -68,14 +72,14 @@
             </div>
 
             <div class="box">
-                <h2>Publication Types</h2>
-                <canvas id="typePieChart" height="260"></canvas>
+                <h3>Publication Types</h3>
+                <canvas id="typePieChart" height="200"></canvas>
                 <div id="typeLegend" class="type-legend" aria-hidden="false"></div>
             </div>
 
             <div class="box">
-                <h2>Publications per Year</h2>
-                <canvas id="yearBarChart" height="160"></canvas>
+                <h3>Publications per Year</h3>
+                <canvas id="yearBarChart" height="200"></canvas>
             </div>
 
             <div class="box">
@@ -188,7 +192,7 @@ function renderPublicationsList(pubs) {
             const doiPart = doiHtml ? ` ${doiHtml}` : '';
 
          // 7. Only add the review dash if reviewed is true
-            const reviewPart = pub.Reviewed ? ' — Reviewed' : '';
+            const reviewPart = pub.Reviewed ? ` - ${pub.Reviewed}` : '';
 
             // Assemble html for edited-volume-like types and close the block
             const htmlBody = `${authorPart}${titlePart}${seriesPart}${volumePart}${metaPart}${doiPart}${reviewPart}`;
@@ -255,7 +259,7 @@ function renderPublicationsList(pubs) {
         if (title) coreParts.push(`'${title}'`); // Kept single quotes here too for consistency
         
         // Use 'Inside' since we know it exists
-        coreParts.push(`in: <span class="pub-title">${pub.Inside}</span>`);
+        coreParts.push(`${pub.Inside}`);
         
         let htmlStart = coreParts.join(', ');
         let volumePart = pub.Volume ? ` ${pub.Volume}` : '';
@@ -270,7 +274,7 @@ function renderPublicationsList(pubs) {
         if (pub.Year) metaInfo.push(pub.Year);
         
         let metaPart = metaInfo.length > 0 ? ` (${metaInfo.join(', ')})` : '';
-        let pagePart = pub['Page-range'] ? `: ${pub['Page-range']}` : '';
+        let pagePart = pub['Page-range'] ? `, ${pub['Page-range']}` : '';
         let doiPart = doiHtml ? ` ${doiHtml}` : '';
 
         html = `${htmlStart}${volumePart}${metaPart}${pagePart}${doiPart}`;
