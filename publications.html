@@ -28,7 +28,7 @@
         .accordion-content { display: none; padding: 8px 0; max-height: 320px; overflow-y: auto; }
         .accordion-content.active { display: block; }
 
-        .checkbox-label { display: block; padding: 4px 0; font-size: 0.95rem; }
+        .checkbox-label { display: block; padding: 4px 0; font-size: 0.8rem; }
 
         /* Publication list small tweaks */
         .publications-list { border-radius: 4px; overflow: hidden; }
@@ -41,10 +41,10 @@
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
         /* Legend styles - more compact */
-        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.5rem; }
+        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.8rem; }
         .type-legend-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .type-legend-item input[type="checkbox"] { margin: 0; }
-        .color-box { width: 6px; height: 6px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+        .color-box { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
         .type-legend-item span:last-child { white-space: nowrap; }
 
         /* Year bar pointer */
@@ -72,13 +72,13 @@
             </div>
 
             <div class="box">
-                <h3>Publication Types</h3>
+                <h3>Publication types</h3>
                 <canvas id="typePieChart" height="200"></canvas>
                 <div id="typeLegend" class="type-legend" aria-hidden="false"></div>
             </div>
 
             <div class="box">
-                <h3>Publications per Year</h3>
+                <h3>Publications per year</h3>
                 <canvas id="yearBarChart" height="200"></canvas>
             </div>
 
