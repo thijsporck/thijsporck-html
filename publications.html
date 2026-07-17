@@ -41,7 +41,7 @@
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
         /* Legend styles - more compact */
-        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.8rem; }
+        .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.9rem; }
         .type-legend-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .type-legend-item input[type="checkbox"] { margin: 0; }
         .color-box { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
@@ -447,12 +447,12 @@ function renderYearBar(pubs) {
     const years = Object.keys(counts).sort((a,b)=>a-b);
     if (yearChart) yearChart.destroy();
     // Build colors so selected years stand out
-    const buildColors = () => years.map(y => activeFilters.years.size === 0 ? '#4e79a7' : (activeFilters.years.has(y) ? '#d9534f' : '#dddddd'));
+    const buildColors = () => years.map(x => activeFilters.years.size === 0 ? '#4e79a7' : (activeFilters.years.has(x) ? '#d9534f' : '#dddddd'));
 
     yearChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels: years, datasets: [{ label: 'Publications', data: years.map(y=>counts[y]), backgroundColor: buildColors() }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        data: { labels: years, datasets: [{ label: 'Publications', data: years.map(x=>counts[x]), backgroundColor: buildColors() }] },
+        options: { responsive: true, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
     });
 
     // Click handler: toggle year filter (single-year selection)
