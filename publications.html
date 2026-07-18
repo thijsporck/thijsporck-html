@@ -82,7 +82,7 @@
 
             <div class="box">
                 <h3>Publications per year</h3>
-                <canvas id="yearBarChart" height="500"></canvas>
+                <canvas id="yearBarChart" height="600"></canvas>
             </div>
 
             <div class="box">
@@ -207,7 +207,7 @@ function renderPublicationsList(pubs) {
             let coreParts = [];
                 if (authors) coreParts.push(authors);
                 if (title) coreParts.push(`'${title}'`);
-                if (pub.Inside) coreParts.push(`<span class="pub-title">${pub.Inside}</span>`);
+                if (pub.Inside) coreParts.push(`${pub.Inside}`);
                 if (pub.Journal) coreParts.push(`<span class="pub-title"><i>${pub.Journal}</i></span>`);
              // Join the core parts with a comma and a space
             let htmlStart = coreParts.join(', ');
