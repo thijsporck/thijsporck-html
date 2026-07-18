@@ -261,16 +261,24 @@ function renderSinglePublication(pub) {
     }
 
     else if (type === 'Peer-reviewed journal article') {
-     // 1. Build the core citation array (Authors, Title, Inside (if filled), Journal)
+     // 1. Build the core citation array (Authors, Title)
         let coreParts = [];
             if (authors) coreParts.push(authors);
             if (title) coreParts.push(`'${title}'`);
-            // Add Inside if filled, but NO comma between Inside and Journal
-            if (pub.Inside) coreParts.push(`${pub.Inside}`);
-            if (pub.Journal) coreParts.push(`<span class="pub-title"><i>${pub.Journal}</i></span>`);
          // Join the core parts with a comma and a space
         let htmlStart = coreParts.join(', ');
-     // 2. Handle Volume and Year combination gracefully
+     
+     // 2. Handle Inside and Journal together (no comma between them)
+        let insideJournalPart = '';
+        if (pub.Inside && pub.Journal) {
+            insideJournalPart = `, ${pub.Inside} <span class="pub-title"><i>${pub.Journal}</i></span>`;
+        } else if (pub.Inside) {
+            insideJournalPart = `, ${pub.Inside}`;
+        } else if (pub.Journal) {
+            insideJournalPart = `, <span class="pub-title"><i>${pub.Journal}</i></span>`;
+        }
+     
+     // 3. Handle Volume and Year combination gracefully
         let volumeYearPart = '';
             if (pub.Volume && pub.Year) {
                 volumeYearPart = ` ${pub.Volume} (${pub.Year})`;
@@ -279,15 +287,15 @@ function renderSinglePublication(pub) {
             } else if (pub.Year) {
             volumeYearPart = ` (${pub.Year})`;
             }
-     // 3. Handle Page Range with its leading colon
+     // 4. Handle Page Range with its leading colon
         let pagePart = pub['Page-range'] ? `: ${pub['Page-range']}` : '';
 
-        // 4. Handle DOI with its leading space/comma
+        // 5. Handle DOI with its leading space/comma
         // (Assumes doiHtml already contains its own formatting or text link)
          let doiPart = doiHtml ? ` ${doiHtml}` : '';
 
         // Assemble everything tightly together
-        html = `${htmlStart}${volumeYearPart}${pagePart}${doiPart}`;
+        html = `${htmlStart}${insideJournalPart}${volumeYearPart}${pagePart}${doiPart}`;
     }
 
     else {
