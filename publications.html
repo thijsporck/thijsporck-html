@@ -63,8 +63,8 @@
             .type-legend { gap: 6px }
             /* Move sidebar to the bottom on small screens */
             .container { flex-direction: column-reverse; padding: 10px; }
-            .sidebar { min-width: auto; width: 100%; }
             .main-content { width: 100%; }
+            .sidebar { min-width: auto; width: 100%; }
             /* Make charts responsive inside their containers */
             canvas { max-width: 100% !important; height: auto !important; }
         }
@@ -535,7 +535,13 @@ function renderYearBar(pubs) {
             scales: { 
                 y: { 
                     beginAtZero: true, 
-                    ticks: { stepSize: 1 },
+                    ticks: { 
+                            stepSize: 1 
+                            autoSkip: false,
+                            font: {
+                                size: 8
+                                }
+                            },
                     reverse: true
                 } 
             } 
