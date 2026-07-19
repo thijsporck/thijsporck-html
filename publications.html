@@ -62,7 +62,7 @@
         @media (max-width: 900px) {
             .type-legend { gap: 6px }
             /* Move sidebar to the bottom on small screens */
-            .container { flex-direction: column-reverse; padding: 10px; }
+            .container { flex-direction: column; padding: 10px; }
             .main-content { width: 100%; }
             .sidebar { min-width: auto; width: 100%; }
             /* Make charts responsive inside their containers */
@@ -539,7 +539,7 @@ function renderYearBar(pubs) {
                             stepSize: 1, 
                             autoSkip: false,
                             font: {
-                                size: 8
+                                size: 10
                                 }
                             },
                     reverse: true
