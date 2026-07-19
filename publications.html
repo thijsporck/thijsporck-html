@@ -61,6 +61,12 @@
         /* Small responsive adjustments (the main responsive layout is in css/style.css) */
         @media (max-width: 900px) {
             .type-legend { gap: 6px }
+            /* Move sidebar to the bottom on small screens */
+            .container { flex-direction: column-reverse; padding: 10px; }
+            .sidebar { min-width: auto; width: 100%; }
+            .main-content { width: 100%; }
+            /* Make charts responsive inside their containers */
+            canvas { max-width: 100% !important; height: auto !important; }
         }
     </style>
 </head>
@@ -114,7 +120,8 @@ const CSV_URL = 'https://raw.githubusercontent.com/thijsporck/thijsporck-html/re
 let allPublications = [];
 let allTypes = [];
 let typeChart, yearChart;
-let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set(), typesExcluded: new Set(), years: new Set() };
+// NOTE: typesIncluded now controls inclusion. When empty -> show ALL types. When non-empty -> show ONLY selected types.
+let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set(), typesIncluded: new Set(), years: new Set() };
 
 // ==================== LOAD CSV ====================
 Papa.parse(CSV_URL, {
@@ -428,10 +435,12 @@ function filterPublications() {
     if (document.getElementById('oaFilter').checked) {
         filtered = filtered.filter(p => (p['Open Access'] || '').trim() === 'Yes');
     }
-    // Exclude types that were unchecked in the legend
-    if (activeFilters.typesExcluded.size > 0) {
-        filtered = filtered.filter(p => !activeFilters.typesExcluded.has((p['Type of publication']||'Other').trim()));
+
+    // Inclusion by publication type: when any types are selected in the legend, show ONLY those types.
+    if (activeFilters.typesIncluded && activeFilters.typesIncluded.size > 0) {
+        filtered = filtered.filter(p => activeFilters.typesIncluded.has((p['Type of publication']||'Other').trim()));
     }
+
     // Year filter: when a year is selected, only show that year's publications
     if (activeFilters.years.size > 0) {
         filtered = filtered.filter(p => activeFilters.years.has(p.Year));
@@ -478,7 +487,7 @@ function renderTypePie(pubs) {
         options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
-    // Build a custom legend with checkboxes (checkbox = included, unchecked = excluded)
+    // Build a custom legend with checkboxes (checkbox = included). Behavior: when none are checked -> show ALL types. When one or more are checked -> show ONLY checked types. The legend itself always shows all types (checked or unchecked).
     const legendDiv = document.getElementById('typeLegend');
     legendDiv.innerHTML = '';
     labels.forEach((label, idx) => {
@@ -486,13 +495,14 @@ function renderTypePie(pubs) {
         item.className = 'type-legend-item';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        // checked = included
-        checkbox.checked = !activeFilters.typesExcluded.has(label);
+        // If no types are explicitly selected, treat that as "all types"; show checkboxes unchecked in that state.
+        checkbox.checked = (activeFilters.typesIncluded && activeFilters.typesIncluded.size > 0) ? activeFilters.typesIncluded.has(label) : false;
         checkbox.dataset.type = label;
         checkbox.addEventListener('change', (e) => {
             const t = e.target.dataset.type;
-            if (e.target.checked) activeFilters.typesExcluded.delete(t);
-            else activeFilters.typesExcluded.add(t);
+            if (!activeFilters.typesIncluded) activeFilters.typesIncluded = new Set();
+            if (e.target.checked) activeFilters.typesIncluded.add(t);
+            else activeFilters.typesIncluded.delete(t);
             renderAll();
         });
         const colorBox = document.createElement('span');
