@@ -15,7 +15,7 @@
         .pub-item:last-child { border-bottom: none; }
         .pub-item:hover { background: #F2F2F2; }
         .pub-title { font-style: italic; }
-        .doi-link { color: #9B2C2C; text-decoration: none; font-weight: 500; }
+        .doi-link { color: #9B2C2C; text-decoration: none; font-weight: bold; }
         .doi-link:hover { color: #0c2577; text-decoration: underline; }
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
@@ -38,16 +38,17 @@
                 with Open Access options added between square brackets when applicable 
                 (I try to make my scholarship avalable, via the KCWorks repository of <a href="https://hcommons.org/members/thijsporck/" target="_blank">Knowledge Commons</a>). 
                 You can use the sidebar on the right (or the bottom for mobile users) to filter publications for Open Access availability, type, year of publication, theme, co-author and publisher.</p>
-                
+
     <div class="container">
         <!-- LEFT: Publications list generated from CSV -->
         <div class="main-content">
-            <div class="pub-count">Showing <span id="countNum">0</span> publications</div>
+            <div class="pub-count"><h2>Showing <span id="countNum">0</span> publications</h2></div>
             <div class="publications-list" id="pubList"></div>
         </div>
 
         <!-- RIGHT: Sidebar with Publication type pie chart, year bar chart and various filters in accordions -->
         <div class="sidebar">
+            <h2>Filters</h2>
             <div class="box">
                 <label><input type="checkbox" id="oaFilter"> <strong>Only show Open Access publications</strong></label>
             </div>

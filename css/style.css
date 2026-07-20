@@ -68,7 +68,7 @@ a:hover {
     display: flex;
     background: #F9F9F8;
     gap: 10px;
-    padding: 65px 75px;
+    padding: 5px 75px;
     box-shadow: 0 10px 45px rgba(0, 0, 0, 0.09);
     border-radius: 8px;
 }
