@@ -8,6 +8,8 @@
     box-sizing: border-box;
 }
 
+/* Font size and stuff */
+
 body {
     margin: 0;
     padding: 50px 20px;
@@ -19,18 +21,10 @@ body {
     font-weight: 400;
 }
 
-.container {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: #ffffff;
-    padding: 65px 75px;
-    box-shadow: 0 10px 45px rgba(0, 0, 0, 0.09);
-    border-radius: 8px;
-}
-
 h1, h2, h3, h4 {
     font-family: 'Platypi', serif;
     color: #1a1a1a;
+    text-align: center;
     font-weight: 500;
     line-height: 1.15;
 }
@@ -46,6 +40,12 @@ h2 {
     margin-top: 2.8rem;
 }
 
+h4 {
+margin-top: 20px;
+margin-bottom: 10px;
+font-size: 1.1rem;
+}
+
 p {
     margin-bottom: 1.65em;
 }
@@ -59,12 +59,65 @@ a:hover {
     color: #0c2577;
 }
 
-/* Responsive for iframe embedding */
+/* Container, main-content and sidebar */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    background: #f8f7f4;
+    gap: 10px;
+    padding: 65px 75px;
+    box-shadow: 0 10px 45px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+}
+
+.main-content { 
+    flex: 8; 
+}
+
+.sidebar { 
+    flex: 2; 
+    min-width: 200px; 
+}
+
+.sidebar .box { 
+    padding: 10px; 
+    border-radius: 4px; 
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); 
+    margin-bottom: 10px; 
+}
+
+/* Accordion styles */
+
+.accordion { margin-bottom: 10px; }
+.accordion-header { cursor: pointer; font-weight: 600; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+.accordion-header::after { content: "▼"; font-size: 0.9rem; transition: transform 0.2s; }
+.accordion-header.active::after { transform: rotate(180deg); }
+.accordion-content { display: none; padding: 8px 0; max-height: 320px; overflow-y: auto; }
+.accordion-content.active { display: block; }
+
+/* Checkbox styles */
+
+.checkbox-label { display: block; padding: 4px 0; font-size: 0.8rem; }
+
+/* Adjustments for smaller screens */
+
 @media (max-width: 900px) {
     body { padding: 30px 15px; }
     .container { 
-        padding: 45px 50px; 
+        flex-direction: column;
+        padding: 10px; 
         border-radius: 4px;
+    }
+    .main-content { width: 100%; }
+    .sidebar { 
+        min-width: auto; 
+        width: 100%; 
+    }
+    canvas { 
+        max-width: 100% !important; 
+        height: auto !important; 
     }
 }
 

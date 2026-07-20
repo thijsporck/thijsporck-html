@@ -8,82 +8,44 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        /* Page-specific styles that complement css/style.css */
-         body { margin: 0; padding: 20px;}
-        .container { max-width: 1400px; margin: 0 auto; display: flex; gap: 10px; }
-        .main-content { flex: 8; }
-        .sidebar { flex: 2; min-width: 200px; }
-        h1 {
-        text-align: center;
-        }
-        h3 {
-        text-align: center;
-        }
 
-        h4 {
-        margin-top: 20px;
-        margin-bottom: 10px;
-        font-size: 1.1rem;
-        }
-
-        .sidebar .box { padding: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; }
-
-        /* Accordion */
-        .accordion { margin-bottom: 10px; }
-        .accordion-header { cursor: pointer; font-weight: 600; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .accordion-header::after { content: "▼"; font-size: 0.9rem; transition: transform 0.2s; }
-        .accordion-header.active::after { transform: rotate(180deg); }
-        .accordion-content { display: none; padding: 8px 0; max-height: 320px; overflow-y: auto; }
-        .accordion-content.active { display: block; }
-
-        .checkbox-label { display: block; padding: 4px 0; font-size: 0.8rem; }
-
-        /* Publication list small tweaks */
+        /* Page-specific style for generated publications list */
         .publications-list { border-radius: 4px; overflow: hidden; }
         .pub-item { padding: 8px 11px; border-bottom: 1px solid; line-height: 1.25; }
         .pub-item:last-child { border-bottom: none; }
         .pub-item:hover { background: #F2F2F2; }
         .pub-title { font-style: italic; }
-        .doi-link { color: #0c2577; text-decoration: none; font-weight: 500; }
-        .doi-link:hover { color: #9B2C2C; text-decoration: underline; }
+        .doi-link { color: #9B2C2C; text-decoration: none; font-weight: 500; }
+        .doi-link:hover { color: #0c2577; text-decoration: underline; }
         .pub-count { font-weight: bold; margin: 5px 0 10px 0; font-size: 1.1rem; }
 
-        /* Legend styles - more compact */
+        /* Page-specific style for Publication type legend */
         .type-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 0.9rem; }
         .type-legend-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .type-legend-item input[type="checkbox"] { margin: 0; }
-        .color-box { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
         .type-legend-item span:last-child { white-space: nowrap; }
+        .color-box { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+        .checkbox-label { display: block; padding: 4px 0; font-size: 0.8rem; }
 
-        /* Year bar pointer */
+        /* Changing mouse into pointer when hovering over bar chart for Publications per year so that user knows it is clickable */
         #yearBarChart { cursor: pointer }
 
-        /* Small responsive adjustments (the main responsive layout is in css/style.css) */
-        @media (max-width: 900px) {
-            .type-legend { gap: 6px }
-            /* Move sidebar to the bottom on small screens */
-            .container { flex-direction: column; padding: 10px; }
-            .main-content { width: 100%; }
-            .sidebar { min-width: auto; width: 100%; }
-            /* Make charts responsive inside their containers */
-            canvas { max-width: 100% !important; height: auto !important; }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- LEFT: Publications -->
-        <div class="main-content">
-            <h1>Publications</h1>
+        <h1>Publications</h1>
             <p>Below is a full overview of my publications, 
                 with Open Access options added between square brackets when applicable 
                 (I try to make my scholarship avalable, via the KCWorks repository of <a href="https://hcommons.org/members/thijsporck/" target="_blank">Knowledge Commons</a>)). 
                 You can use the sidebar on the right (or the bottom for mobile users) to filter publications for Open Access availability, type, year of publication, theme, co-author and publisher.</p>
+        <!-- LEFT: Publications list generated from CSV -->
+        <div class="main-content">
             <div class="pub-count">Showing <span id="countNum">0</span> publications</div>
             <div class="publications-list" id="pubList"></div>
         </div>
 
-        <!-- RIGHT: Sidebar -->
+        <!-- RIGHT: Sidebar with Publication type pie chart, year bar chart and various filters in accordions -->
         <div class="sidebar">
             <div class="box">
                 <label><input type="checkbox" id="oaFilter"> <strong>Only show Open Access publications</strong></label>
@@ -118,23 +80,21 @@
     </div>
 
 <script>
-// ==================== CONFIG ====================
+// ==================== Initial data configuration and storage ====================
 const CSV_URL = 'https://raw.githubusercontent.com/thijsporck/thijsporck-html/refs/heads/main/data/publications.csv';
 
 let allPublications = [];
 let allTypes = [];
 let typeChart, yearChart;
-// NOTE: typesIncluded now controls inclusion. When empty -> show ALL types. When non-empty -> show ONLY selected types.
 let activeFilters = { themes: new Set(), coauthors: new Set(), publishers: new Set(), typesIncluded: new Set(), years: new Set() };
 
-// ==================== LOAD CSV ====================
+// ==================== Using PapaParse to fetch data from CSV, clean and validate publications and extract unique publication types ====================
 Papa.parse(CSV_URL, {
     download: true,
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
         allPublications = results.data.filter(row => row.Title && row.Year);
-        // Build master list of types in order of first appearance in CSV
         allTypes = [];
         const seen = new Set();
         allPublications.forEach(p => {
@@ -144,12 +104,12 @@ Papa.parse(CSV_URL, {
                 seen.add(t);
             }
         });
-        populateFilters(allPublications); // initial population
+        populateFilters(allPublications); 
         renderAll();
     }
 });
 
-// ==================== Fixing author and editor formatting ====================
+// ==================== Pluralizing authors and editors  ====================
 function formatAuthors(authorsStr, isEditor = false) {
     if (!authorsStr) return '';
     let authors = authorsStr.split(';').map(a => a.trim()).filter(Boolean);
@@ -163,11 +123,10 @@ function formatAuthors(authorsStr, isEditor = false) {
     return formatted;
 }
 
-// ==================== PLURALIZE TYPE NAME ====================
+// ==================== Pluralizing type names ====================
 function pluralizeTypeName(typeName, count) {
     if (count === 1) return typeName;
     
-    // Map of type names to their plural forms
     const pluralMap = {
         'Monograph': 'Monographs',
         'Edited volume': 'Edited volumes',
