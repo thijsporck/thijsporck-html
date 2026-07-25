@@ -3,30 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book Carousel</title>
+  <title>Book Carousel - 5 Visible</title>
   <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 60px 0;
+    }
 
     .carousel-wrapper {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
       position: relative;
-      perspective: 1500px;
+      perspective: 1600px;
     }
 
     .carousel {
-      height: 460px;
+      height: 480px;
       position: relative;
       overflow: hidden;
     }
 
     .book-item {
       position: absolute;
-      width: 190px;
+      width: 200px;
       top: 50%;
       transform: translateY(-50%);
-      transition: all 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
-      cursor: pointer;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.35);
+      transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
       border-radius: 12px;
       overflow: hidden;
     }
@@ -37,36 +42,47 @@
       display: block;
     }
 
-    /* Center - Big & Sharp */
-    .book-item.center {
+    /* Far Left (-2) - 40% */
+    .book-item.offset-2 {
+      left: 8%;
+      transform: translateY(-50%) scale(0.42);
+      opacity: 0.45;
+      filter: blur(4px) brightness(0.85);
+      z-index: 1;
+    }
+
+    /* Near Left (-1) - 70% */
+    .book-item.offset-1 {
+      left: 22%;
+      transform: translateY(-50%) scale(0.72) rotateY(8deg);
+      opacity: 0.78;
+      filter: blur(1.5px) brightness(0.95);
+      z-index: 5;
+    }
+
+    /* Center (0) */
+    .book-item.offset-0 {
       left: 50%;
-      transform: translate(-50%, -50%) scale(1.28);
-      z-index: 15;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+      transform: translate(-50%, -50%) scale(1.25);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.45);
+      z-index: 20;
     }
 
-    /* Left side */
-    .book-item.left {
-      left: 25%;
-      transform: translateY(-50%) scale(0.78) rotateY(12deg);
-      opacity: 0.75;
-      filter: blur(1.5px) brightness(0.9);
+    /* Near Right (+1) - 70% */
+    .book-item.offset-1r {
+      left: 68%;
+      transform: translateY(-50%) scale(0.72) rotateY(-8deg);
+      opacity: 0.78;
+      filter: blur(1.5px) brightness(0.95);
       z-index: 5;
     }
 
-    /* Right side */
-    .book-item.right {
-      left: 65%;
-      transform: translateY(-50%) scale(0.78) rotateY(-12deg);
-      opacity: 0.75;
-      filter: blur(1.5px) brightness(0.9);
-      z-index: 5;
-    }
-
-    /* Even further items (if you have more books) */
-    .book-item.far-left, .book-item.far-right {
-      opacity: 0.4;
-      filter: blur(3px) brightness(0.7);
+    /* Far Right (+2) - 40% */
+    .book-item.offset-2r {
+      left: 82%;
+      transform: translateY(-50%) scale(0.42);
+      opacity: 0.45;
+      filter: blur(4px) brightness(0.85);
       z-index: 1;
     }
 
@@ -76,38 +92,31 @@
       transform: translateY(-50%);
       background: rgba(255,255,255,0.95);
       border: none;
-      width: 56px;
-      height: 56px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      font-size: 28px;
+      font-size: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
       z-index: 30;
-      transition: all 0.3s;
     }
 
-    .arrow:hover {
-      background: white;
-      transform: translateY(-50%) scale(1.1);
-    }
-
-    .arrow-left  { left: 30px; }
-    .arrow-right { right: 30px; }
+    .arrow:hover { transform: translateY(-50%) scale(1.12); }
+    .arrow-left  { left: 20px; }
+    .arrow-right { right: 20px; }
   </style>
 </head>
 <body>
 
   <div class="carousel-wrapper">
     <div class="carousel" id="carousel"></div>
-
     <button class="arrow arrow-left" id="prev">←</button>
     <button class="arrow arrow-right" id="next">→</button>
   </div>
-
-  <!-- Example anchor target -->
+<!-- Example anchor target -->
   <div id="book-details" style="margin-top: 100px; padding: 40px; background: #fff; max-width: 800px; margin-left: auto; margin-right: auto;">
     <h2>Book Details Appear Here</h2>
     <p>Content for the selected book...</p>
@@ -127,29 +136,36 @@
       { id: 10, title: "Tracing Paradigms: One Hundred Years of Neophilologus",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/9783319815534-920x960-1.jpg", anchor: "#book-details" },
     ];
 
-    let currentIndex = 0;
+    let currentIndex = 0;   // Starts with first book
 
-        const carousel = document.getElementById('carousel');
+    const carousel = document.getElementById('carousel');
 
     function renderCarousel() {
       carousel.innerHTML = '';
 
-      books.forEach((book, i) => {
+      for (let i = -2; i <= 2; i++) {
+        const bookIndex = (currentIndex + i + books.length) % books.length;
+        const book = books[bookIndex];
+
         const item = document.createElement('div');
         item.className = 'book-item';
 
-        const diff = i - currentIndex;
-
-        if (diff === 0) item.classList.add('center');
-        else if (diff === -1) item.classList.add('left');
-        else if (diff === 1) item.classList.add('right');
-        else if (diff < -1) item.classList.add('far-left');
-        else if (diff > 1) item.classList.add('far-right');
+        if (i === 0) {
+          item.classList.add('offset-0');
+        } else if (i === -1) {
+          item.classList.add('offset-1');
+        } else if (i === -2) {
+          item.classList.add('offset-2');
+        } else if (i === 1) {
+          item.classList.add('offset-1r');
+        } else if (i === 2) {
+          item.classList.add('offset-2r');
+        }
 
         item.innerHTML = `<img src="${book.img}" alt="${book.title}">`;
 
         // Only center is clickable
-        if (diff === 0) {
+        if (i === 0) {
           item.style.cursor = 'pointer';
           item.addEventListener('click', () => {
             window.location.href = book.anchor;
@@ -157,7 +173,7 @@
         }
 
         carousel.appendChild(item);
-      });
+      }
     }
 
     function moveCarousel(direction) {
@@ -168,13 +184,12 @@
     document.getElementById('prev').addEventListener('click', () => moveCarousel(-1));
     document.getElementById('next').addEventListener('click', () => moveCarousel(1));
 
-    // Keyboard arrows
+    // Keyboard support
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft') moveCarousel(-1);
       if (e.key === 'ArrowRight') moveCarousel(1);
     });
 
-    // Initial render
     renderCarousel();
   </script>
 </body>
