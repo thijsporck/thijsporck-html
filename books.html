@@ -31,10 +31,10 @@
 
     .book-item {
       flex-shrink: 0;
-      width: 200px;
+      width: 250px;
       transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      border-radius: 8px;
       overflow: hidden;
       position: relative;
     }
@@ -76,21 +76,21 @@
     }
 
     .book-item.left, .book-item.right {
-      transform: scale(0.72) rotateY(8deg);
+      transform: scale(0.8) rotateY(8deg);
       opacity: 0.78;
       filter: blur(1.5px) brightness(0.95);
-      z-index: 5;
+      z-index: 1;
     }
 
     .book-item.right {
-      transform: scale(0.72) rotateY(-8deg);
+      transform: scale(0.8) rotateY(-8deg);
     }
 
     .book-item.far-left, .book-item.far-right {
-      transform: scale(0.42);
+      transform: scale(0.5);
       opacity: 0.45;
       filter: blur(4px) brightness(0.85);
-      z-index: 1;
+      z-index: 5;
     }
 
     .arrow {
