@@ -3,23 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book Carousel - Better Centering</title>
+  <title>Book Carousel - Fixed</title>
   <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 60px 0;
+    }
 
     .carousel-wrapper {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 40px;
+      position: relative;
+      padding: 0 60px; /* space for arrows */
     }
 
     .carousel {
-      height: 520px;
+      height: 560px;   /* More room for title */
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       overflow: hidden;
-      gap: 20px; /* helps with spacing */
+      gap: 30px;
     }
 
     .book-item {
@@ -38,21 +45,21 @@
       display: block;
     }
 
-    /* Title under center only */
+    /* Title - only under center */
     .book-title {
       position: absolute;
-      bottom: -48px;
+      bottom: -55px;
       left: 50%;
       transform: translateX(-50%);
-      background: white;
+      background: #fff;
       color: #222;
-      padding: 8px 20px;
+      padding: 10px 20px;
       border-radius: 8px;
       font-size: 1.1rem;
       font-weight: 600;
       white-space: nowrap;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      z-index: 25;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      z-index: 30;
       opacity: 0;
       transition: opacity 0.4s ease;
     }
@@ -61,35 +68,25 @@
       opacity: 1;
     }
 
-    /* Scale & Effects */
+    /* Scales & Effects */
     .book-item.center {
       transform: scale(1.28);
       z-index: 20;
       box-shadow: 0 30px 60px rgba(0,0,0,0.45);
     }
 
-    .book-item.left {
+    .book-item.left, .book-item.right {
       transform: scale(0.72) rotateY(8deg);
       opacity: 0.78;
       filter: blur(1.5px) brightness(0.95);
       z-index: 5;
     }
 
-    .book-item.far-left {
-      transform: scale(0.42);
-      opacity: 0.45;
-      filter: blur(4px) brightness(0.85);
-      z-index: 1;
-    }
-
     .book-item.right {
       transform: scale(0.72) rotateY(-8deg);
-      opacity: 0.78;
-      filter: blur(1.5px) brightness(0.95);
-      z-index: 5;
     }
 
-    .book-item.far-right {
+    .book-item.far-left, .book-item.far-right {
       transform: scale(0.42);
       opacity: 0.45;
       filter: blur(4px) brightness(0.85);
@@ -111,11 +108,12 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-      z-index: 30;
+      z-index: 40;
     }
 
-    .arrow-left  { left: 10px; }
-    .arrow-right { right: 10px; }
+    .arrow-left  { left: 0; }
+    .arrow-right { right: 0; }
+
     .arrow:hover { transform: translateY(-50%) scale(1.12); }
   </style>
 </head>
