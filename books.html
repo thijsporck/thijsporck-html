@@ -3,37 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book Carousel - 5 Visible</title>
+  <title>Book Carousel - Better Centering</title>
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 60px 0;
-    }
 
     .carousel-wrapper {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
-      position: relative;
-      perspective: 1600px;
+      padding: 0 40px;
     }
 
     .carousel {
-      height: 480px;
+      height: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       position: relative;
       overflow: hidden;
+      gap: 20px; /* helps with spacing */
     }
 
     .book-item {
-      position: absolute;
+      flex-shrink: 0;
       width: 200px;
-      top: 50%;
-      transform: translateY(-50%);
       transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
       box-shadow: 0 15px 35px rgba(0,0,0,0.3);
       border-radius: 12px;
       overflow: hidden;
+      position: relative;
     }
 
     .book-item img {
@@ -42,45 +38,59 @@
       display: block;
     }
 
-    /* Far Left (-2) - 40% */
-    .book-item.offset-2 {
-      left: 8%;
-      transform: translateY(-50%) scale(0.42);
+    /* Title under center only */
+    .book-title {
+      position: absolute;
+      bottom: -48px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      color: #222;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      z-index: 25;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .book-item.center .book-title {
+      opacity: 1;
+    }
+
+    /* Scale & Effects */
+    .book-item.center {
+      transform: scale(1.28);
+      z-index: 20;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.45);
+    }
+
+    .book-item.left {
+      transform: scale(0.72) rotateY(8deg);
+      opacity: 0.78;
+      filter: blur(1.5px) brightness(0.95);
+      z-index: 5;
+    }
+
+    .book-item.far-left {
+      transform: scale(0.42);
       opacity: 0.45;
       filter: blur(4px) brightness(0.85);
       z-index: 1;
     }
 
-    /* Near Left (-1) - 70% */
-    .book-item.offset-1 {
-      left: 22%;
-      transform: translateY(-50%) scale(0.72) rotateY(8deg);
+    .book-item.right {
+      transform: scale(0.72) rotateY(-8deg);
       opacity: 0.78;
       filter: blur(1.5px) brightness(0.95);
       z-index: 5;
     }
 
-    /* Center (0) */
-    .book-item.offset-0 {
-      left: 50%;
-      transform: translate(-50%, -50%) scale(1.25);
-      box-shadow: 0 30px 60px rgba(0,0,0,0.45);
-      z-index: 20;
-    }
-
-    /* Near Right (+1) - 70% */
-    .book-item.offset-1r {
-      left: 68%;
-      transform: translateY(-50%) scale(0.72) rotateY(-8deg);
-      opacity: 0.78;
-      filter: blur(1.5px) brightness(0.95);
-      z-index: 5;
-    }
-
-    /* Far Right (+2) - 40% */
-    .book-item.offset-2r {
-      left: 82%;
-      transform: translateY(-50%) scale(0.42);
+    .book-item.far-right {
+      transform: scale(0.42);
       opacity: 0.45;
       filter: blur(4px) brightness(0.85);
       z-index: 1;
@@ -104,9 +114,9 @@
       z-index: 30;
     }
 
+    .arrow-left  { left: 10px; }
+    .arrow-right { right: 10px; }
     .arrow:hover { transform: translateY(-50%) scale(1.12); }
-    .arrow-left  { left: 20px; }
-    .arrow-right { right: 20px; }
   </style>
 </head>
 <body>
@@ -116,6 +126,7 @@
     <button class="arrow arrow-left" id="prev">←</button>
     <button class="arrow arrow-right" id="next">→</button>
   </div>
+
 <!-- Example anchor target -->
   <div id="book-details" style="margin-top: 100px; padding: 40px; background: #fff; max-width: 800px; margin-left: auto; margin-right: auto;">
     <h2>Book Details Appear Here</h2>
@@ -136,7 +147,8 @@
       { id: 10, title: "Tracing Paradigms: One Hundred Years of Neophilologus",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/9783319815534-920x960-1.jpg", anchor: "#book-details" },
     ];
 
-    let currentIndex = 0;   // Starts with first book
+
+    let currentIndex = 0;
 
     const carousel = document.getElementById('carousel');
 
@@ -148,28 +160,24 @@
         const book = books[bookIndex];
 
         const item = document.createElement('div');
-        item.className = 'book-item';
+        
+        let className = 'book-item ';
+        if (i === 0) className += 'center';
+        else if (i === -2) className += 'far-left';
+        else if (i === -1) className += 'left';
+        else if (i === 1) className += 'right';
+        else if (i === 2) className += 'far-right';
 
-        if (i === 0) {
-          item.classList.add('offset-0');
-        } else if (i === -1) {
-          item.classList.add('offset-1');
-        } else if (i === -2) {
-          item.classList.add('offset-2');
-        } else if (i === 1) {
-          item.classList.add('offset-1r');
-        } else if (i === 2) {
-          item.classList.add('offset-2r');
-        }
+        item.className = className;
 
-        item.innerHTML = `<img src="${book.img}" alt="${book.title}">`;
+        item.innerHTML = `
+          <img src="${book.img}" alt="${book.title}">
+          ${i === 0 ? `<div class="book-title">${book.title}</div>` : ''}
+        `;
 
-        // Only center is clickable
         if (i === 0) {
           item.style.cursor = 'pointer';
-          item.addEventListener('click', () => {
-            window.location.href = book.anchor;
-          });
+          item.addEventListener('click', () => window.location.href = book.anchor);
         }
 
         carousel.appendChild(item);
@@ -184,7 +192,6 @@
     document.getElementById('prev').addEventListener('click', () => moveCarousel(-1));
     document.getElementById('next').addEventListener('click', () => moveCarousel(1));
 
-    // Keyboard support
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft') moveCarousel(-1);
       if (e.key === 'ArrowRight') moveCarousel(1);
