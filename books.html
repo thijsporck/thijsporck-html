@@ -7,28 +7,27 @@
   <style>
 
     .carousel-wrapper {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       position: relative;
-      perspective: 1200px; /* Gives depth */
+      perspective: 1500px;
     }
 
     .carousel {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 420px;
+      height: 460px;
       position: relative;
       overflow: hidden;
     }
 
     .book-item {
       position: absolute;
-      width: 180px;
-      transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+      width: 190px;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: all 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
       cursor: pointer;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-      border-radius: 8px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.35);
+      border-radius: 12px;
       overflow: hidden;
     }
 
@@ -36,47 +35,57 @@
       width: 100%;
       height: auto;
       display: block;
-      transition: filter 0.4s;
     }
 
-    /* Center book - prominent */
+    /* Center - Big & Sharp */
     .book-item.center {
-      transform: scale(1.25) translateY(-20px);
-      z-index: 10;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1.28);
+      z-index: 15;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
     }
 
-    .book-item.center img {
-      filter: none;
+    /* Left side */
+    .book-item.left {
+      left: 25%;
+      transform: translateY(-50%) scale(0.78) rotateY(12deg);
+      opacity: 0.75;
+      filter: blur(1.5px) brightness(0.9);
+      z-index: 5;
     }
 
-    /* Left & Right items - fainter */
-    .book-item.left, .book-item.right {
-      transform: scale(0.75);
-      opacity: 0.65;
-      filter: blur(1px);
+    /* Right side */
+    .book-item.right {
+      left: 65%;
+      transform: translateY(-50%) scale(0.78) rotateY(-12deg);
+      opacity: 0.75;
+      filter: blur(1.5px) brightness(0.9);
+      z-index: 5;
     }
 
-    .book-item.left  { z-index: 5; }
-    .book-item.right { z-index: 5; }
+    /* Even further items (if you have more books) */
+    .book-item.far-left, .book-item.far-right {
+      opacity: 0.4;
+      filter: blur(3px) brightness(0.7);
+      z-index: 1;
+    }
 
-    /* Arrows */
     .arrow {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.95);
       border: none;
-      width: 50px;
-      height: 50px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
-      font-size: 24px;
+      font-size: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 20;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+      z-index: 30;
       transition: all 0.3s;
     }
 
@@ -85,16 +94,14 @@
       transform: translateY(-50%) scale(1.1);
     }
 
-    .arrow-left  { left: 20px; }
-    .arrow-right { right: 20px; }
+    .arrow-left  { left: 30px; }
+    .arrow-right { right: 30px; }
   </style>
 </head>
 <body>
 
   <div class="carousel-wrapper">
-    <div class="carousel" id="carousel">
-      <!-- Books populated by JS -->
-    </div>
+    <div class="carousel" id="carousel"></div>
 
     <button class="arrow arrow-left" id="prev">←</button>
     <button class="arrow arrow-right" id="next">→</button>
@@ -115,23 +122,30 @@
       { id: 5, title: "Old English Medievalism",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/06/oemedievalism-coverrrrrrrrrr.jpg", anchor: "#book-details" },
     ];
 
-    let currentIndex = 2; // Start with middle book centered
+    let currentIndex = 1; // Start with middle book centered
 
-    const carousel = document.getElementById('carousel');
+        const carousel = document.getElementById('carousel');
 
     function renderCarousel() {
       carousel.innerHTML = '';
 
       books.forEach((book, i) => {
         const item = document.createElement('div');
-        item.className = `book-item ${i === currentIndex ? 'center' : i === currentIndex - 1 ? 'left' : i === currentIndex + 1 ? 'right' : ''}`;
-        
-        item.innerHTML = `
-          <img src="${book.img}" alt="${book.title}">
-        `;
+        item.className = 'book-item';
 
-        // Click only works on the center book
-        if (i === currentIndex) {
+        const diff = i - currentIndex;
+
+        if (diff === 0) item.classList.add('center');
+        else if (diff === -1) item.classList.add('left');
+        else if (diff === 1) item.classList.add('right');
+        else if (diff < -1) item.classList.add('far-left');
+        else if (diff > 1) item.classList.add('far-right');
+
+        item.innerHTML = `<img src="${book.img}" alt="${book.title}">`;
+
+        // Only center is clickable
+        if (diff === 0) {
+          item.style.cursor = 'pointer';
           item.addEventListener('click', () => {
             window.location.href = book.anchor;
           });
@@ -146,11 +160,10 @@
       renderCarousel();
     }
 
-    // Buttons
     document.getElementById('prev').addEventListener('click', () => moveCarousel(-1));
     document.getElementById('next').addEventListener('click', () => moveCarousel(1));
 
-    // Keyboard support
+    // Keyboard arrows
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft') moveCarousel(-1);
       if (e.key === 'ArrowRight') moveCarousel(1);
