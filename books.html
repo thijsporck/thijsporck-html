@@ -5,12 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Carousel - Fixed</title>
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f8f7f4;
-      margin: 0;
-      padding: 0;
-    }
 
     .carousel-wrapper {
       max-width: 1200px;
@@ -115,7 +109,7 @@
   </style>
 </head>
 <body>
-        <h1>Books</h1>
+  <h1>Books</h1>
 
   <div class="carousel-wrapper">
     <div class="carousel" id="carousel"></div>
@@ -125,16 +119,16 @@
 
   <script>
     const books = [
-      { id: 1, title: "<i>Old Age in Early Medieval England</I> (2019)",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/thijs-porck-old-age-in-early-medieval-england.jpg", anchor: "https://thijsporck.com/books/#oldage" },
-      { id: 2, title: "Cultural Connections between the Continent and Early Medieval England",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2025/02/bremmerschrift-cover-2.jpg", anchor: "#book-details" },
-      { id: 3, title: "Unlocking the History of English", img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2024/02/cilt364.jpg", anchor: "#book-details" },
-      { id: 4, title: "Keys to the History of English",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2024/02/cilt363.jpg", anchor: "#book-details" },
-      { id: 5, title: "Old English Medievalism",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/06/oemedievalism-coverrrrrrrrrr.jpg", anchor: "#book-details" },
-      { id: 6, title: "Early Medieval English Life Courses",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/openacces.cover-emelc.jpg", anchor: "#book-details" },
-      { id: 7, title: "Exploring Early Medieval English Eloquence",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/eemee.publicatiepagina.coverpagina.jpg", anchor: "#book-details" },
-      { id: 8, title: "Scholarly Correspondence on Medieval Germanic Language and Literature", img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/porckvanbaalenmann.2018.abag2018.cover_.jpg", anchor: "#book-details" },
-      { id: 9, title: "The Familiar and the Foreign in Old Germanic Studies",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/porckfamiliarforeign-cover.jpg", anchor: "#book-details" },
-      { id: 10, title: "Tracing Paradigms: One Hundred Years of Neophilologus",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/9783319815534-920x960-1.jpg", anchor: "#book-details" },
+      { id: 1, title: "<i>Old Age in Early Medieval England</i> (2019)",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/thijs-porck-old-age-in-early-medieval-england.jpg", anchor: "https://thijsporck.com/books/#oldage" },
+      { id: 2, title: "<i>Cultural Connections between the Continent and Early Medieval England</i> (2025)",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2025/02/bremmerschrift-cover-2.jpg", anchor: "#book-details" },
+      { id: 3, title: "<i>Unlocking the History of English</i> (2024)", img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2024/02/cilt364.jpg", anchor: "#book-details" },
+      { id: 4, title: "<i>Keys to the History of English</i> (2024)",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2024/02/cilt363.jpg", anchor: "#book-details" },
+      { id: 5, title: "<i>Old English Medievalism</i> (2022)",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/06/oemedievalism-coverrrrrrrrrr.jpg", anchor: "#book-details" },
+      { id: 6, title: "<i>Early Medieval English Life Courses</i> (2022)",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/openacces.cover-emelc.jpg", anchor: "#book-details" },
+      { id: 7, title: "<i>Exploring Early Medieval English Eloquence</i> (2021)",   img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/eemee.publicatiepagina.coverpagina.jpg", anchor: "#book-details" },
+      { id: 8, title: "<i>Scholarly Correspondence on Medieval Germanic Language and Literature</i> (2018)", img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/porckvanbaalenmann.2018.abag2018.cover_.jpg", anchor: "#book-details" },
+      { id: 9, title: "<i>The Familiar and the Foreign in Old Germanic Studies</i> (2017)",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/porckfamiliarforeign-cover.jpg", anchor: "#book-details" },
+      { id: 10, title: "<i>Tracing Paradigms: One Hundred Years of Neophilologus</i> (2016)",  img: "https://i0.wp.com/thijsporck.com/wp-content/uploads/2022/01/9783319815534-920x960-1.jpg", anchor: "#book-details" },
     ];
 
 
