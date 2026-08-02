@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: #f8f9fa;
+      background: #f8f7f4;
       margin: 0;
       padding: 60px 0;
     }
@@ -16,11 +16,11 @@
       max-width: 1200px;
       margin: 0 auto;
       position: relative;
-      padding: 0 60px; /* space for arrows */
+      padding: 0 60px; 
     }
 
     .carousel {
-      height: 560px;   /* More room for title */
+      height: 560px;  
       display: flex;
       align-items: center;
       justify-content: center;
@@ -35,7 +35,6 @@
       transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
       border-radius: 8px;
-      overflow: hidden;
       position: relative;
     }
 
@@ -45,7 +44,6 @@
       display: block;
     }
 
-    /* Title - only under center */
     .book-title {
       position: absolute;
       bottom: -55px;
@@ -68,7 +66,6 @@
       opacity: 1;
     }
 
-    /* Scales & Effects */
     .book-item.center {
       transform: scale(1.28);
       z-index: 20;
